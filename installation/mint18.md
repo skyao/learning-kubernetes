@@ -21,16 +21,24 @@
 
     重新登录(或者重启，否则 conjure-up 会报错说找不到 conjure-up 命令)，
 
+3. 设置代理
+
+	最后发现还是不要设置代理了，代理设置后各种报错。
+
 ## 安装 kubernetes
 
 参考这里的步骤：
 
 https://kubernetes.io/docs/getting-started-guides/ubuntu/
 
+conjure-up的代理设置参考这个文章：
+
+https://blog.felipe-alfaro.com/2017/04/04/juju-and-apt-cacher/
+
 执行命令:
 
 ```bash
-conjure-up kubernetes
+conjure-up kubernetes --apt-proxy http://localhost:8123 --apt-https-proxy http://localhost:8123
 ```
 
 弹出窗口，选择安装类型，第一个选项是"Kubernetes Core":
@@ -87,3 +95,31 @@ https://kubernetes.io/docs/getting-started-guides/ubuntu/local/
 ![](images/mint18-52.jpg)
 
 ![](images/mint18-53.jpg)
+
+遇到问题，卡死在这里，无解。放弃。
+
+![](images/mint18-7.jpg)
+
+## 备注
+
+### lxd优化
+
+https://github.com/lxc/lxd/blob/master/doc/production-setup.md
+
+### 删除juju controller
+
+参考juju资料:
+
+- https://jujucharms.com/docs/2.2/controllers
+- https://docs.ubuntu.com/conjure-up/en/
+
+```bash
+juju controllers
+juju destroy-controller ****
+```
+
+如果 destroy-controller 不成功，会提示用 kill-controller:
+
+```bash
+juju kill-controller ****
+```

@@ -4,6 +4,7 @@
 	* [资料](introduction/information.md)
 * [安装](installation/index.md)
 	* [linux mint 18.1](installation/mint18.md)
+	* [使用kubeadm安装](installation/kubeadm.md)
 * [全文标签总览](tags.md)
 
 
