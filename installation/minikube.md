@@ -55,7 +55,7 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.21.0/minik
 > 切记要设置代理，否则会因为网络被墙导致无法获取镜像，`kubectl get pod` 会发现一直阻塞在 status　`ContainerCreating`．
 
 ```bash
-minikube start --docker-env http_proxy=http://192.168.31.152:8123 --docker-env https_proxy=http://192.168.31.152:8123 --docker-env no_proxy=localhost,127.0.0.1,::1,192.168.31.152,192.168.31.34,192.168.31.31,192.168.99.1
+minikube start --docker-env http_proxy=http://192.168.31.152:8123 --docker-env https_proxy=http://192.168.31.152:8123 --docker-env no_proxy=localhost,127.0.0.1,::1,192.168.31.0/24,192.168.99.0/24
 ```
 
 > 注意：这里的代理一定要是http代理，因此不能直接输入shadowsocks的地址，要用pilipo提供的http代理，而且要设置pilipo的proxyAddress，不能只监听127.0.0.1．
