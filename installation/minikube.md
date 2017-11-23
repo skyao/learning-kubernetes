@@ -33,18 +33,22 @@ chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
 ```
 
+注意：如果更新了Minikube，务必重新再执行上述步骤以便更新kubectl到最新版本，否则可能出现问题，比如`minikube dashboard`打不开浏览器。
+
 ## 安装Minikube
 
 参考文档:
 
-- [安装](https://github.com/kubernetes/minikube/releases)
-- [使用](https://github.com/kubernetes/minikube/blob/v0.21.0/README.md)
+- [安装](https://github.com/kubernetes/minikube/releases): 注意检查最新版本
+- [使用](https://github.com/kubernetes/minikube/blob/v0.23.0/README.md)
 
 安装命令：
 
 ```bash
-curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.21.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
 ```
+
+如果有更新，修改上面命令中的版本号即可。
 
 ## 通过minikube运行k8s
 
