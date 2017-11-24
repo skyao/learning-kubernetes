@@ -15,21 +15,14 @@
     },
   "plugins": [
     "theme-comscore",
-    "callouts",
     "splitter",
     "-sharing",
-    "edit-link",
-    "wide-page",
-    "back-to-top-button",
-    "tags"
+    "edit-link"
   ],
   "pluginsConfig": {
     "edit-link": {
         "base": "https://github.com/skyao/learning-kubernetes/edit/master",
         "label": "Edit"
-    },
-    "callouts": {
-        "showTypeInHeader": false
     }
   },
   "title": "Kubernetes学习笔记",
