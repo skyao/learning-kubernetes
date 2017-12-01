@@ -99,7 +99,12 @@ export http_proxy=http://192.168.31.152:8123
 export HTTP_PROXY=$http_proxy
 export https_proxy=$http_proxy
 export HTTPS_PROXY=$http_proxy
+export ALL_PROXY=$http_proxy
+export all_proxy=$http_proxy
+export FTP_PROXY=$http_proxy
+export ftp_proxy=$http_proxy
 export no_proxy="localhost,127.0.0.1,localaddress,.localdomain.com,example.com,10.18.17.16,::1,192.168.31.152"
+export NO_PROXY=$no_proxy
 
 kubeadm init
 ```
@@ -138,5 +143,10 @@ kubeadm init
     free -m
 	```
 
+	实测发现，虽然当时生效了，但是过一段时间，虚拟内存又出现了。解决方式：通过磁盘工具将swap分区删除。
+
+	遗憾翻墙始终没有成功，即使参照下文：
+
+	- [Where does kubeadm take the proxy settings from?](https://github.com/kubernetes/kubeadm/issues/324)
 
 
