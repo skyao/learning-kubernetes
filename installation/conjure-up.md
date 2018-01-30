@@ -105,6 +105,10 @@ https://kubernetes.io/docs/getting-started-guides/ubuntu/local/
 
 ![](images/mint18-53.jpg)
 
+大概1个小时（估计是网速不够快），终于安装完成：
+
+![](images/mint18-8.jpg)
+
 ## 备注
 
 ### lxd优化
