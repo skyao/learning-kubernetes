@@ -22,7 +22,11 @@ kubectl是官方提供的客户端工具，可直接以命令行的方式同集�
 source <(kubectl completion bash)
 ```
 
-方便起见，可以直接修改`/etc/profile`，加入上面的命令。
+方便起见，可以直接修改`/etc/profile`，加入sourcek8s别名。
+
+```bash
+alias sourcek8s='source <(kubectl completion bash)'
+```
 
 
 

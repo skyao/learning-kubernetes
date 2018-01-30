@@ -1,4 +1,4 @@
-# linux mint 18.1 安装
+# 使用conjure-up安装
 
 参考官方介绍的 ubuntu 安装方法:
 
@@ -20,10 +20,6 @@
     ```
 
     重新登录(或者重启，否则 conjure-up 会报错说找不到 conjure-up 命令)，
-
-3. 设置代理
-
-	最后发现还是不要设置代理了，代理设置后各种报错。
 
 ## 安装 kubernetes
 
@@ -80,6 +76,17 @@ conjure-up kubernetes --apt-proxy http://localhost:8123 --apt-https-proxy http:/
 
     这个是当前账号的group不对，重启就好了。
 
+4. 没有网络或者存储
+
+	![](images/mint18-54.jpg)
+
+	需要重新安装lxd，并初始化：
+
+    ```bash
+    sudo snap install lxd;
+    /snap/bin/lxd init --auto
+    ```
+
 解决上面的问题后，就可以继续安装，
 
 ![](images/mint18-4.jpg)
@@ -88,17 +95,15 @@ conjure-up kubernetes --apt-proxy http://localhost:8123 --apt-https-proxy http:/
 
 https://kubernetes.io/docs/getting-started-guides/ubuntu/local/
 
+耐心等待，安装很慢，大概要等5-10分钟，然后就可以看到这个界面：
+
 ![](images/mint18-5.jpg)
 
-耐心等待，安装很慢，大概要等5-10分钟。(TBD: 怀疑是忘了设置代理，可能下载镜像太慢)
+继续等待。
 
 ![](images/mint18-52.jpg)
 
 ![](images/mint18-53.jpg)
-
-遇到问题，卡死在这里，无解。放弃。
-
-![](images/mint18-7.jpg)
 
 ## 备注
 

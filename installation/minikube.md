@@ -11,26 +11,24 @@
 
 ### 安装VirtualBox
 
-下载地址:
+具体操作参考这里：
 
-https://www.virtualbox.org/wiki/Downloads
+https://skyao.io/learning-linux-mint/daily/system/virtualbox.html
 
-- VirtualBox 5.1.26 platform packages
-- VirtualBox 5.1.26 Oracle VM VirtualBox Extension Pack
+### 安装kubectl
 
-安装下载的　`virtualbox-5.1_5.1.26-117224-Ubuntu-xenial_amd64.deb`
-
-完成后，双击 `Oracle_VM_VirtualBox_Extension_Pack-5.1.26-117224.vbox-extpack` 再安装扩展包.
-
-###　安装kubectl
+参考：
 
 https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
+执行命令如下：
 
 ```bash
 curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
 
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
+kubectl version
 ```
 
 注意：如果更新了Minikube，务必重新再执行上述步骤以便更新kubectl到最新版本，否则可能出现问题，比如`minikube dashboard`打不开浏览器。
@@ -45,7 +43,9 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 安装命令：
 
 ```bash
-curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.25.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+
+minikube version
 ```
 
 如果有更新，修改上面命令中的版本号即可。
@@ -61,6 +61,8 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.23.0/minik
 ```bash
 minikube start --docker-env http_proxy=http://192.168.31.152:8123 --docker-env https_proxy=http://192.168.31.152:8123 --docker-env no_proxy=localhost,127.0.0.1,::1,192.168.31.0/24,192.168.99.0/24
 ```
+
+如果有全局翻墙，就可以简单的`minikube start`启动。
 
 > 注意：这里的代理一定要是http代理，因此不能直接输入shadowsocks的地址，要用pilipo提供的http代理，而且要设置pilipo的proxyAddress，不能只监听127.0.0.1．
 

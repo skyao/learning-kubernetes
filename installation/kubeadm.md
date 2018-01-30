@@ -30,94 +30,18 @@ sudo apt-get install bridge-utils
 
 ### 注意事项
 
-1.在国内是无法访问google yum 源,需要添加 https 代理
+1. 如果在使用 kubeadm init 命令是 提示以下内容:
 
-```bash
- export https_proxy="http://xxx.xx.xx.xx:xx"
-```
-在安装完成后需要关闭代理
+    ```bash
+    [preflight] Some fatal errors occurred:
+        /proc/sys/net/bridge/bridge-nf-call-iptables contents are not set to 1
+    ```
 
-```bash
- unset https_proxy
-```
-
-或者如果之前设置了hp/sp别名，可以如下操作：
-
-```bash
-sudo -i
-hp apt-get install bridge-utils
-```
-
-
-2.如果在使用 kubeadm init 命令是 提示以下内容:
-
-```bash
-[preflight] Some fatal errors occurred:
-	/proc/sys/net/bridge/bridge-nf-call-iptables contents are not set to 1
-```
-
-执行:
-```bash
-echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
-echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables
-```
-
-## 安装kubeadm
-
-按照[官方文档](https://kubernetes.io/docs/setup/independent/install-kubeadm/)的指示，执行如下命令：
-
-```bash
-apt-get update && apt-get install -y apt-transport-https
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-```
-
-通常在`apt-get update`时会遇到问题，因为kubernetes的网站被墙了。
-
-之后会遇到一个尴尬的问题：如果不翻墙，kubernetes等被墙的网站无法访问，update也就没有意义。如果翻墙，则原来设置的国内的镜像源无法访问（我的翻墙工具有这问题）。后来想到版本，将镜像源设置为台湾，再翻墙，就都可以访问了。
-
-```bash
-hp apt-get update
-hp apt-get install -y kubelet kubeadm kubectl
-```
-
-终于把kubeadm安装好了。
-
-## 安装k8s
-
-### 配置代理
-
-kubeadm使用时，还是有个翻墙的问题，尤其由于在ubuntu下，需要sudo，所以必须在sudo之后设置代理。
-
-```bash
-sudo -i
-export http_proxy=http://192.168.31.152:8123
-export HTTP_PROXY=$http_proxy
-export https_proxy=$http_proxy
-export HTTPS_PROXY=$http_proxy
-export ALL_PROXY=$http_proxy
-export all_proxy=$http_proxy
-export FTP_PROXY=$http_proxy
-export ftp_proxy=$http_proxy
-export no_proxy="localhost,127.0.0.1,localaddress,.localdomain.com,example.com,10.18.17.16,::1,192.168.31.152"
-export NO_PROXY=$no_proxy
-
-kubeadm init
-```
-
-备注:
-
-1. `192.168.31.152`是物理机的网卡IP，注意修改
-1. `192.168.31.0/24`和`192.168.31.*`这样的写法在这里无法生效
-1. 如果代理设置不正确，会有如下提示：
-
-	```bash
-    [preflight] WARNING: Connection to "https://192.168.31.152:6443" uses proxy "http://192.168.31.152:8123". If that is not intended, adjust your proxy settings
-	```
+    执行:
+    ```bash
+    echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+    echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables
+    ```
 
 1. 禁用虚拟内存swap
 
@@ -145,8 +69,65 @@ kubeadm init
 
 	实测发现，虽然当时生效了，但是过一段时间，虚拟内存又出现了。解决方式：通过磁盘工具将swap分区删除。
 
-	遗憾翻墙始终没有成功，即使参照下文：
+## 安装kubeadm
 
-	- [Where does kubeadm take the proxy settings from?](https://github.com/kubernetes/kubeadm/issues/324)
+> 切记： 想办法搞定全局翻墙，不然kubeadm安装是比较麻烦的。
+
+按照[官方文档](https://kubernetes.io/docs/setup/independent/install-kubeadm/)的指示，执行如下命令：
+
+```bash
+apt-get update && apt-get install -y apt-transport-https
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+```
+
+## 安装k8s
+
+> 同样： 想办法搞定全局翻墙。
+
+```bash
+sudo kubeadm init
+```
+
+输出如下：
+
+```bash
+[init] Using Kubernetes version: v1.9.2
+[init] Using Authorization modes: [Node RBAC]
+......
+[addons] Applied essential addon: kube-dns
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes master has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join --token d05a21.dfad690e77acc878 192.168.1.244:6443 --discovery-token-ca-cert-hash sha256:263c07847848652711ecbe62b128d4c7e4a24418995a49c78f4ec3753cf111d4
+```
+
+为了使用普通用户，按照上面的提示执行：
+
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+
 
 
