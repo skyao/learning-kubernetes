@@ -99,7 +99,7 @@ https://kubernetes.io/docs/getting-started-guides/ubuntu/local/
 
 ![](images/mint18-5.jpg)
 
-继续等待。
+继续等待，需要很长时间，从网络监控看全程大概要下载2g多内容。
 
 ![](images/mint18-52.jpg)
 
