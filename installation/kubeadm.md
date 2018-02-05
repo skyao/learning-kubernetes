@@ -128,6 +128,19 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
+此时如果遇到执行命令时报如下错误：
 
+```bash
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"9", GitVersion:"v1.9.2", GitCommit:"5fa2db2bd46ac79e5e00a4e6ed24191080aa463b", GitTreeState:"clean", BuildDate:"2018-01-18T10:09:24Z", GoVersion:"go1.9.2", Compiler:"gc", Platform:"linux/amd64"}
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+```
 
+需要修改`/etc/kubernetes/manifests/kube-apiserver.yaml`文件，修改下列参数：
+
+```bash
+- --insecure-port=8080
+```
+
+默认是0不打开，修改为8080即可。
 
