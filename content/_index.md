@@ -1,4 +1,9 @@
-# Kubernetes 学习笔记
+---
+date: 2018-12-06T08:00:00+08:00
+title: 前言
+weight: 1
+description : "介绍Kubernetes学习笔记的基本资料和访问方式"
+---
 
 ### 内容介绍
 

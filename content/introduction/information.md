@@ -1,8 +1,16 @@
-# 资料
+---
+date: 2018-12-06T08:00:00+08:00
+title: Kubernetes资料收集
+menu:
+  main:
+    parent: "introduction"
+weight: 190
+description : "收集Kubernetes的各种资料"
+---
 
 ## 官方资料
 
-- [官网](https://kubernetes.io/)
+- [Kubernetes官网](https://kubernetes.io/)
 - [kubernetes@github](https://github.com/kubernetes/kubernetes)
 
 ### 官方文档
@@ -21,10 +29,10 @@
     - Config Reference
     - Design Docs
 
-## 社区
+## 社区资料
 
 - [kubernetes中文社区](https://www.kubernetes.org.cn/)
 
-## 介绍资料
+## 学习资料
 
 - [Kubernetes指南](https://feisky.gitbooks.io/kubernetes/): 这是目前最新最好的Kubernetes中文资料，强烈推荐！

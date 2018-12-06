@@ -1,4 +1,10 @@
-# kubectl
+---
+date: 2018-12-06T08:00:00+08:00
+title: kubectl
+weight: 310
+description : "kubectl介绍"
+---
+
 
 kubectl是官方提供的客户端工具，可直接以命令行的方式同集群交互。
 
@@ -30,4 +36,20 @@ alias sourcek8s='source <(kubectl completion bash)'
 
 
 
+## 备忘
 
+
+
+```bash
+$ kubectl cluster-info
+Kubernetes master is running at https://192.168.0.10:6443
+KubeDNS is running at https://192.168.0.10:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+```
+
+```bash
+$ kubectl get services kubernetes-dashboard -n kube-system
+$ kubectl get pods --namespace=kube-system
+kubectl describe po kubernetes-dashboard-79ff88449c-hj72p --namespace kube-system
+$ kubectl get nodes
+$ kubectl get pods --all-namespaces
+```

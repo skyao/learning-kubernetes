@@ -1,8 +1,17 @@
-# Minikube安装
+---
+date: 2018-12-06T08:00:00+08:00
+title: ubuntu下用minikube安装
+menu:
+  main:
+    parent: "installation-minikube"
+weight: 211
+description : "ubuntu下用minikube安装kubernetes"
+---
 
-> #### info::参考官方资料
->
-> https://kubernetes.io/docs/tasks/tools/install-minikube/
+
+参考官方资料:
+
+https://kubernetes.io/docs/tasks/tools/install-minikube/
 
 ## 准备
 

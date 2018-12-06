@@ -1,8 +1,19 @@
-# 使用kubeadm安装
+---
+date: 2018-12-06T08:00:00+08:00
+title: ubuntu下用kubeadm安装
+menu:
+  main:
+    parent: "installation-kubeadm"
+weight: 221
+description : "ubuntu下用kubeadm安装kubernetes"
+---
 
 参考 Kubernetes 官方文档:
 
 - [Using kubeadm to Create a Cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
+- https://my.oschina.net/u/2306127/blog/1922542
+- https://linuxconfig.org/how-to-install-kubernetes-on-ubuntu-18-04-bionic-beaver-linux
+- https://kubernetes.io/docs/setup/independent/install-kubeadm/
 
 ## 前期准备
 
@@ -65,7 +76,7 @@ sudo apt-get install bridge-utils
     reboot
     # 看看是否生效
     free -m
-	```
+	 ```
 
 	实测发现，虽然当时生效了，但是过一段时间，虚拟内存又出现了。解决方式：通过磁盘工具将swap分区删除。
 
@@ -144,3 +155,24 @@ The connection to the server localhost:8080 was refused - did you specify the ri
 
 默认是0不打开，修改为8080即可。
 
+### 安装dashboard
+
+参考：
+
+- https://ithelp.ithome.com.tw/articles/10195385
+- https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+- https://my.oschina.net/u/2306127/blog/1606599
+
+```bash
+kubectl proxy
+Starting to serve on 127.0.0.1:8001
+```
+
+http://127.0.0.1:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login
+
+```bash
+kubectl proxy --address='0.0.0.0' --port=8001 --accept-hosts='^*$'
+Starting to serve on [::]:8001
+```
+
+http://192.168.0.10:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login
