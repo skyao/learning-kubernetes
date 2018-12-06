@@ -12,22 +12,8 @@ description : "收集Kubernetes的各种资料"
 
 - [Kubernetes官网](https://kubernetes.io/)
 - [kubernetes@github](https://github.com/kubernetes/kubernetes)
-
-### 官方文档
-
-[官方文档](https://kubernetes.io/docs/home/)首页，这里有k8s的各个文档：
-
-- [setup/安装](https://kubernetes.io/docs/setup/)
-- [Concepts/概念](https://kubernetes.io/docs/concepts/)
-- [Tasks/任务](https://kubernetes.io/docs/tasks/)
-- [Tutorials/教程](https://kubernetes.io/docs/tutorials/index/)
-- [Reference/参考文档](https://kubernetes.io/docs/reference/index/)
-
-    - [API Reference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.9/)
-    - API Client Libraries
-    - CLI Reference
-    - Config Reference
-    - Design Docs
+- 官方文档：[英文版](https://kubernetes.io/docs/home/) ，还有 [中文翻译版本](https://kubernetes.io/zh/docs/home/)，不过目前完成度还比较低
+- https://k8smeetup.github.io/docs/: 这里有另一份中文翻译版本（官方中文版本的前身），完成度较高
 
 ## 社区资料
 

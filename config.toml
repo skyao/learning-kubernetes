@@ -97,6 +97,19 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	weight = 300
 
 [[menu.main]]
+	name   = "扩展"
+	identifier = "addons"
+	url    = "/addons/"
+	weight = 500
+
+[[menu.main]]
+	name   = "dashboard"
+	identifier = "addons-dashboard"
+	parent = "addons"
+	url    = "/addons/dashboard/"
+	weight = 500
+
+[[menu.main]]
 	name   = "kubectl"
 	identifier = "tool-kubectl"
     parent = "tool"
