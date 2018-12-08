@@ -1,10 +1,10 @@
 ---
 date: 2018-12-06T08:00:00+08:00
-title: Kubernetes资料收集
+title: 资料收集
 menu:
   main:
-    parent: "introduction"
-weight: 190
+    parent: "introduction-overview"
+weight: 119
 description : "收集Kubernetes的各种资料"
 ---
 
@@ -13,7 +13,7 @@ description : "收集Kubernetes的各种资料"
 - [Kubernetes官网](https://kubernetes.io/)
 - [kubernetes@github](https://github.com/kubernetes/kubernetes)
 - 官方文档：[英文版](https://kubernetes.io/docs/home/) ，还有 [中文翻译版本](https://kubernetes.io/zh/docs/home/)，不过目前完成度还比较低
-- https://k8smeetup.github.io/docs/: 这里有另一份中文翻译版本（官方中文版本的前身），完成度较高
+- https://k8smeetup.github.io/docs/home/ : 这里有另一份中文翻译版本（官方中文版本的前身），完成度较高
 
 ## 社区资料
 

@@ -64,6 +64,35 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	weight = 100
 
 [[menu.main]]
+	name   = "概述"
+	identifier = "introduction-overview"
+	parent = "introduction"
+	url    = "/introduction/overview/"
+	weight = 110
+
+[[menu.main]]
+	name   = "概念"
+	identifier = "introduction-concept"
+	parent = "introduction"
+	url    = "/introduction/concept/"
+	weight = 120
+
+[[menu.main]]
+	name   = "组件"
+	identifier = "introduction-component"
+	parent = "introduction"
+	url    = "/introduction/component/"
+	weight = 130
+
+[[menu.main]]
+	name   = "API"
+	identifier = "introduction-api"
+	parent = "introduction"
+	url    = "/introduction/api/"
+	weight = 140
+
+
+[[menu.main]]
 	name   = "安装"
 	identifier = "installation"
 	url    = "/installation/"

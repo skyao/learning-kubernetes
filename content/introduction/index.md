@@ -5,5 +5,3 @@ weight: 100
 description : "Kubernetes介绍"
 ---
 
-TBD
-
