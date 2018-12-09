@@ -91,6 +91,12 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	url    = "/introduction/api/"
 	weight = 140
 
+[[menu.main]]
+	name   = "对象"
+	identifier = "introduction-object"
+	parent = "introduction"
+	url    = "/introduction/object/"
+	weight = 150
 
 [[menu.main]]
 	name   = "安装"

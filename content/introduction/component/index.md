@@ -85,6 +85,26 @@ kube-proxy通过维护主机上的网络规则并执行连接转发来实现Kube
 
 扩展（addons）是实现集群功能的pod和服务。可以通过 Deployments，ReplicationControllers 等管理 pod。 Namespaced 扩展对象在 kube-system 命名空间中创建。
 
+### DNS
+
+虽然其他插件并非严格要求，但所有Kubernetes集群都应具有集群DNS，因为许多示例都依赖于它。
+
+Cluster DNS是为Kubernetes服务提供DNS记录的DNS服务器，除了环境中的其他DNS服务器之外。
+
+Kubernetes启动的容器会在DNS搜索中自动包含此DNS服务器。
+
+### Web UI (Dashboard)
+
+Dashboard是用于Kubernetes集群的基于Web的通用UI。 允许用户管理和解决集群中运行的应用程序以及集群本身。
+
+### Container Resource Monitoring
+
+Container Resource Monitoring在中央数据库中记录关于容器的通用时间序列度量，并提供用于浏览该数据的UI。
+
+### Cluster-level Logging
+
+Cluster-level Logging机制负责将容器日志保存到具有搜索/浏览界面的中央日志存储。
+
 ### 参考资料
 
 - [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/): 官方文档的介绍
