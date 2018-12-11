@@ -161,7 +161,24 @@ selector:
 
 这个选择器（分别以`json`或`yaml`格式）等同于`component=redis`或 `component in (redis)`。
 
-支持基于集合的需求的资源
+### 支持基于集合的条件的资源
+
+较新的资源（如Job, Deployment, Replica Set, 和 Daemon Set,）支持基于集合的条件。
+
+```bash
+selector:
+  matchLabels:
+    component: redis
+  matchExpressions:
+    - {key: tier, operator: In, values: [cache]}
+    - {key: environment, operator: NotIn, values: [dev]}
+```
+
+`matchLabels`是 `{key，value}` 对的map。 `matchLabels` map 中的单个 `{key，value}` 等同于 `matchExpressions` 的元素，其 key 字段为“key”，运算符为“In”，values 数组仅包含 “value”。 `matchExpressions`是pod选择器的条件列表。有效的运算符包括In，NotIn，Exists和DoesNotExist。 在In和NotIn的情况下，设置的值必须是非空的。 来自matchLabels和matchExpressions的所有条件都是 AND 在一起 - 它们必须全部满足才能匹配。
+
+#### 选择节点集合
+
+使用选择标签的一个用例是约束pod可以调度的节点集。有关更多信息，请参阅有关 [节点选择](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/) 的文档。
 
 
 

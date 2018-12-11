@@ -151,6 +151,12 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	url    = "/tool/kubectl/"
 	weight = 310
 
+[[menu.main]]
+	name   = "多租户"
+	identifier = "multitenancy"
+	url    = "/multitenancy/"
+	weight = 3000
+
 
 [blackfriday]
 	smartypants	= true
