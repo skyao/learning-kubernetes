@@ -4,7 +4,7 @@ title: 字段选择器
 menu:
   main:
     parent: "introduction-object"
-weight: 155
+weight: 255
 description : "Kubernetes对象的字段选择器"
 ---
 
@@ -48,13 +48,17 @@ $ kubectl get services --field-selector metadata.namespace!=default
 
 ### 链式选择器
 
-
+与标签和其他选择器一样，字段选择器可以链接在一起作为逗号分隔列表。这个 `kubectl` 命令选择 `status.phase` 不等于 `Running` 并且 `spec.restartPolicy` 字段等于 `Always` 的所有Pod：
 
 ```bash
 $ kubectl get pods --field-selector=status.phase!=Running,spec.restartPolicy=Always
 ```
 
+### 多资源类型
 
+您可以跨多种资源类型使用字段选择器。 此kubectl命令选择不在默认命名空间中的所有Statefulsets和Services：
 
-
+```bash
+$ kubectl get statefulsets,services --field-selector metadata.namespace!=default
+```
 

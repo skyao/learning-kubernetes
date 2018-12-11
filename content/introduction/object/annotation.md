@@ -4,7 +4,7 @@ title: Annotation
 menu:
   main:
     parent: "introduction-object"
-weight: 154
+weight: 254
 description : "Kubernetes对象的Annotation属性"
 ---
 

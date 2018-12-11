@@ -1,7 +1,7 @@
 ---
 date: 2018-12-08T09:00:00+08:00
 title: Kubernetes对象
-weight: 150
+weight: 250
 description : "Kubernetes对象"
 ---
 

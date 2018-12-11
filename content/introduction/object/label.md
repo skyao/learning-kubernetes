@@ -4,7 +4,7 @@ title: Label和选择器
 menu:
   main:
     parent: "introduction-object"
-weight: 153
+weight: 253
 description : "Kubernetes对象的Label和选择器"
 ---
 

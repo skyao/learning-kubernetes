@@ -4,7 +4,7 @@ title: 资料收集
 menu:
   main:
     parent: "introduction-overview"
-weight: 119
+weight: 219
 description : "收集Kubernetes的各种资料"
 ---
 

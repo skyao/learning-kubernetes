@@ -1,7 +1,7 @@
 ---
 date: 2018-12-06T08:00:00+08:00
 title: Kubernetes安装
-weight: 200
+weight: 100
 description : "Kubernetes安装"
 ---
 

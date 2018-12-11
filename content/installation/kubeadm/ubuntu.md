@@ -4,7 +4,7 @@ title: ubuntu下用kubeadm安装
 menu:
   main:
     parent: "installation-kubeadm"
-weight: 221
+weight: 121
 description : "ubuntu下用kubeadm安装kubernetes"
 ---
 
@@ -76,7 +76,7 @@ sudo apt-get install bridge-utils
     reboot
     # 看看是否生效
     free -m
-	 ```
+	  ```
 
 	实测发现，虽然当时生效了，但是过一段时间，虚拟内存又出现了。解决方式：通过磁盘工具将swap分区删除。
 

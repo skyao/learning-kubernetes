@@ -58,78 +58,98 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	weight = 1
 
 [[menu.main]]
-	name   = "介绍"
-	identifier = "introduction"
-	url    = "/introduction/"
-	weight = 100
-
-[[menu.main]]
-	name   = "概述"
-	identifier = "introduction-overview"
-	parent = "introduction"
-	url    = "/introduction/overview/"
-	weight = 110
-
-[[menu.main]]
-	name   = "概念"
-	identifier = "introduction-concept"
-	parent = "introduction"
-	url    = "/introduction/concept/"
-	weight = 120
-
-[[menu.main]]
-	name   = "组件"
-	identifier = "introduction-component"
-	parent = "introduction"
-	url    = "/introduction/component/"
-	weight = 130
-
-[[menu.main]]
-	name   = "API"
-	identifier = "introduction-api"
-	parent = "introduction"
-	url    = "/introduction/api/"
-	weight = 140
-
-[[menu.main]]
-	name   = "对象"
-	identifier = "introduction-object"
-	parent = "introduction"
-	url    = "/introduction/object/"
-	weight = 150
-
-[[menu.main]]
 	name   = "安装"
 	identifier = "installation"
 	url    = "/installation/"
-	weight = 200
+	weight = 100
 
 [[menu.main]]
 	name   = "使用minikube"
 	identifier = "installation-minikube"
     parent = "installation"
 	url    = "/installation/minikube/"
-	weight = 210
+	weight = 110
 
 [[menu.main]]
 	name   = "使用kubeadm"
 	identifier = "installation-kubeadm"
     parent = "installation"
 	url    = "/installation/kubeadm/"
-	weight = 220
+	weight = 120
 
 [[menu.main]]
 	name   = "使用conjure-up"
 	identifier = "installation-conjure-up"
     parent = "installation"
 	url    = "/installation/conjure-up/"
-	weight = 280
+	weight = 180
+
+[[menu.main]]
+	name   = "介绍"
+	identifier = "introduction"
+	url    = "/introduction/"
+	weight = 200
+
+[[menu.main]]
+	name   = "概述"
+	identifier = "introduction-overview"
+	parent = "introduction"
+	url    = "/introduction/overview/"
+	weight = 210
+
+[[menu.main]]
+	name   = "组件"
+	identifier = "introduction-component"
+	parent = "introduction"
+	url    = "/introduction/component/"
+	weight = 230
+
+[[menu.main]]
+	name   = "API"
+	identifier = "introduction-api"
+	parent = "introduction"
+	url    = "/introduction/api/"
+	weight = 240
+
+[[menu.main]]
+	name   = "对象"
+	identifier = "introduction-object"
+	parent = "introduction"
+	url    = "/introduction/object/"
+	weight = 250
+
+[[menu.main]]
+	name   = "概念"
+	identifier = "concept"
+	url    = "/concept/"
+	weight = 300
+
+[[menu.main]]
+	name   = "Pod"
+	identifier = "concept-pod"
+	parent = "concept"
+	url    = "/concept/pod/"
+	weight = 310
+
+[[menu.main]]
+	name   = "Controller"
+	identifier = "concept-controller"
+	parent = "concept"
+	url    = "/concept/controller/"
+	weight = 320
+
+[[menu.main]]
+	name   = "Service"
+	identifier = "concept-service"
+	parent = "concept"
+	url    = "/concept/service/"
+	weight = 330
 
 [[menu.main]]
 	name   = "工具"
 	identifier = "tool"
 	url    = "/tool/"
-	weight = 300
+	weight = 600
 
 [[menu.main]]
 	name   = "扩展"

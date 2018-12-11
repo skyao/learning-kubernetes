@@ -4,7 +4,7 @@ title: Object Name
 menu:
   main:
     parent: "introduction-object"
-weight: 151
+weight: 251
 description : "Kubernetes对象的name属性"
 ---
 

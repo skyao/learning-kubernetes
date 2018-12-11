@@ -4,7 +4,7 @@ title: ubuntu下用minikube安装
 menu:
   main:
     parent: "installation-minikube"
-weight: 211
+weight: 111
 description : "ubuntu下用minikube安装kubernetes"
 ---
 

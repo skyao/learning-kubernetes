@@ -1,7 +1,7 @@
 ---
 date: 2018-12-08T09:00:00+08:00
 title: 组件
-weight: 130
+weight: 230
 description : "Kubernetes组件"
 ---
 
