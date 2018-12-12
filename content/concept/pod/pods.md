@@ -92,6 +92,14 @@ Pod作为原语公开，以便于：
 * 具有集群级功能的Kubelet级功能的清晰组合 - Kubelet实际上是“pod控制器”
 * 高可用性应用程序，它们将期望在终止之前，并且肯定在删除之前更换pod，例如在计划逐出或镜像预取的情况下。
 
+## Pod的创建
+
+原文没有讲pod的创建，补充一个图，pod 创建的流程：
+
+![](/Users/aoxiaojian/work/code/learning/learning-kubernetes/content/concept/pod/images/pod-start.png)
+
+图片来源：[Core Kubernetes: Jazz Improv over Orchestration](https://blog.heptio.com/core-kubernetes-jazz-improv-over-orchestration-a7903ea92ca)，详细内容可见 [Kubernetes: Lifecycle of a Pod](https://dzone.com/articles/kubernetes-lifecycle-of-a-pod)
+
 ## Pod的终止
 
 因为pod代表集群中节点上的正在运行的进程，所以允许这些进程在不再需要时优雅地终止非常重要（使用KILL信号粗暴杀死并且没有机会清理）。用户应该能够请求删除并知道进程何时终止，但也能够确保删除最终完成。当用户请求删除pod时，系统会在允许pod被强制终止之前记录预期的宽限期，并将TERM信号发送到每个容器中的主进程。宽限期到期后，KILL信号将发送到这些进程，然后从API server中删除该pod。如果在等待进程终止时，重新启动了Kubelet或容器管理器，终止会使用完全宽限期重试。
@@ -109,6 +117,12 @@ Pod作为原语公开，以便于：
 1. Kubelet将通过设置宽限期0（立即删除）完成删除API server上的Pod。Pod从API中消失，不再从客户端可见。
 
 默认情况下，所有删除在30秒内都是优雅的。`kubectl delete` 命令支持 `--grace-period=<seconds>` 属性，允许用户覆盖默认值并指定其自己的值。值`0` 强制删除 pod。在kubectl 版本 >=1.5 时，必须和 `--grace-period=0` 一起指定一个额外的标志 `--force` ，以执行强制删除。
+
+补充一个pod 终止的图：
+
+![](images/pod-terminate.jpg)
+
+图片来源：[Kubernetes: Lifecycle of a Pod](https://dzone.com/articles/kubernetes-lifecycle-of-a-pod)
 
 ### 强制删除pod
 

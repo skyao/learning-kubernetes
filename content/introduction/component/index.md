@@ -11,6 +11,10 @@ description : "Kubernetes组件"
 - Node组件
 - 扩展（Addons）
 
+补充一个图：
+
+![](images/k8s-components.png)
+
 ## Master组件
 
 Master组件提供群集的控制平面。Master组件做群集全局决策（例如，调度），以及检测和响应群集事件（当副本控制器的'replicas'字段不满足时，启动新的pod）。
