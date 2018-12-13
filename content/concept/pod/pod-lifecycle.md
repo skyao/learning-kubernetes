@@ -48,13 +48,13 @@ Pod有一个PodStatus，它有一个[PodConditions](https://kubernetes.io/docs/r
 
 探针（Probe）是通过 kubelet 周期性地执行 Container 的诊断。为了执行诊断，kubelet调用Container实现的 Handler。Handler有三种类型：
 
-* [ExecAction](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#execaction-v1-core):
+* ExecAction
   在Container内执行指定的命令。如果命令以状态代码0退出，则认为诊断成功。
 
-* [TCPSocketAction](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#tcpsocketaction-v1-core):
+* TCPSocketAction:
   对Container的IP地址执行指定端口的TCP检查。如果端口打开，则诊断被认为是成功的。
 
-* [HTTPGetAction](/docs/reference/generated/kubernetes-api/{{< param "version" >}}/#httpgetaction-v1-core):
+* HTTPGetAction:
   对指定端口和路径上的Container的IP地址执行HTTP Get请求。如果响应的状态代码大于或等于200且小于400，则认为诊断成功。
 
 每个探针都有三个结果之一：
