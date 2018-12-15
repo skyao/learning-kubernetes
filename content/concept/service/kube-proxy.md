@@ -4,17 +4,26 @@ title: Kube Proxy
 menu:
   main:
     parent: "concept-service"
-weight: 312
+weight: 331
 description : "Kubernetes pod的生命周期"
 ---
+
+> 备注： 内容摘要自 [Services](https://kubernetes.io/docs/concepts/services-networking/service/) 中的 　“Virtual IPs and service proxies” 一节和最后面的参考资料
 
 Kubernetes集群中的每个节点上都运行一个`kube-proxy`。`kube-proxy`负责实现为除 `ExternalName` 类型外的 `Services` 实现虚拟IP形式。
 
 历史发展信息：
 
-- 在Kubernetes v1.0中，`Services`是一个“4层”（TCP / UDP over IP）构造，代理纯粹工作在用户空间。
-- 在Kubernetes v1.1中，`Ingress` API被添加（beta）以表示“7层”（HTTP）服务，也增加了iptables代理，并成为自Kubernetes v1.2以来的默认操作模式。
-- 在Kubernetes v1.8.0-beta.0中，添加了ipvs代理。
+- Kubernetes v1.0，`Services`是一个“4层”（TCP / UDP over IP）构造，代理纯粹工作在用户空间。
+- Kubernetes v1.1，`Ingress` API被添加（beta）以表示“7层”（HTTP）服务，也增加了iptables代理，
+- Kubernetes v1.2 iptables 成为默认代理模式。
+- Kubernetes v1.8.0-beta.0，引入 ipvs 代理模式
+- kubernetes v1.9，ipvs 代理模式 成为 beta 阶段
+- kubernetes v1.11， ipvs 代理模式 GA
+
+参考资料：
+
+- [kubernetes 简介：service 和 kube-proxy 原理](https://cizixs.com/2017/03/30/kubernetes-introduction-service-and-kube-proxy/): 这个讲的比较容易懂
 
 ### 代理模式：用户空间
 
@@ -65,11 +74,38 @@ kube-proxy 的功能相对简单一些，也比较独立，需要的配置并不
 
 `kube-proxy` 的工作模式可以通过 `--proxy-mode` 进行配置，可以选择 `userspace` 或者 `iptables`。
 
-### 代理模式：ipvs
-
-
-
-### 参考资料
+参考资料：
 
 - [Kubernetes如何利用iptables](http://www.dbsnake.net/how-kubernetes-use-iptables.html)
-- [kubernetes 简介：service 和 kube-proxy 原理](https://cizixs.com/2017/03/30/kubernetes-introduction-service-and-kube-proxy/): 这个讲的比较容易懂
+
+### 代理模式：ipvs
+
+在此模式下，kube-proxy监视Kubernetes的service和endpoint，调用`netlink`接口以相应地创建ipvs规则并定期与Kubernetes service和endpoint 同步ipvs规则，以确保ipvs状态与期望一致。访问服务时，流量将被重定向到其中一个后端Pod。
+
+与iptables类似，Ipvs基于netfilter hook函数，但使用哈希表作为底层数据结构并在内核空间中工作。这意味着ipvs可以更快地重定向流量，并且在同步代理规则时具有更好的性能。此外，ipvs为负载均衡算法提供了更多选项，例如：
+
+- `rr`：round-robin/轮询
+- `lc`：least connection/最少连接
+- `dh`：destination hashing/目标哈希
+- `sh`：source hashing/源哈希
+- `sed`：shortest expected delay/预计延迟时间最短
+- `nq`：never queue/从不排队
+
+> **注意：** ipvs模式假定在运行kube-proxy之前在节点上安装了IPVS内核模块。当kube-proxy以ipvs代理模式启动时，kube-proxy将验证节点上是否安装了IPVS模块，如果未安装，则kube-proxy将回退到iptables代理模式。
+
+![](https://d33wubrfki0l68.cloudfront.net/2d3d2b521cf7f9ff83238218dac1c019c270b1ed/9ac5c/images/docs/services-ipvs-overview.svg)
+
+工作方式和 iptables 类似，kube-proxy只是负责更新维护 ipvs 规则，流量被 ipvs 规则操作后转发给目的地。
+
+参考资料：
+
+- [如何在 kubernetes 中启用 ipvs](https://juejin.im/entry/5b7e409ce51d4538b35c03df)
+- [LVS负载均衡之工作原理说明（原理篇）](http://blog.51cto.com/blief/1745134)
+
+#### kube-router项目
+
+和 kube-proxy ipvs代理模式类似，还有一个单独的项目名为 kube-router
+
+- [官网](https://www.kube-router.io/)
+- [code@github](https://github.com/cloudnativelabs/kube-router)
+- [Kube-router：Kubernetes网络服务代理与IPVS / LVS](https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/)
