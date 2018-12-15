@@ -13,6 +13,3 @@ Kubernetes `Services`的支持`TCP`，`UDP`以及`SCTP`对协议(SCTP支持是�
 
 
 
-
-
-

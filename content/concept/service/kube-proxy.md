@@ -5,7 +5,7 @@ menu:
   main:
     parent: "concept-service"
 weight: 331
-description : "Kubernetes pod的生命周期"
+description : "Kubernetes的kube proxy"
 ---
 
 > 备注： 内容摘要自 [Services](https://kubernetes.io/docs/concepts/services-networking/service/) 中的 　“Virtual IPs and service proxies” 一节和最后面的参考资料
@@ -30,7 +30,7 @@ Kubernetes集群中的每个节点上都运行一个`kube-proxy`。`kube-proxy`�
 在这种模式下，kube-proxy观察Kubernetes master 获悉Service和Endpoints对象的添加和删除。对于每个Service，它在本地节点上打开一个端口（随机选择）。与此“代理端口”的任何连接都将被代理到Service后端Pods其中的一个（称为 Endpoints）。使用哪个后端 Pod 是根据 Service 的 SessionAffinity来决定的。最后，它安装iptables规则，捕获发送到 Service 的 clusterIP（这是虚拟的）和端口的流量，并重定向流量到代理服务器端口，这个端口代理到后端Pod。默认情况下，轮询选择后端。
 > For each `Service` it opens a port (randomly chosen) on the local node.
 >
-> 这句的理解，似乎是每个服务都要开一个随机端口，如果有很多服务岂不是要开很多端口？但看到也有说只看一个端口然后所有服务都转发到这个端口。待确认。
+> 每个服务都要开一个随机端口，如果有很多服务就要开很多端口。已确认，这个做法真是无语。
 
 ![](https://d33wubrfki0l68.cloudfront.net/e351b830334b8622a700a8da6568cb081c464a9b/13020/images/docs/services-userspace-overview.svg)
 
