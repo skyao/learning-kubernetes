@@ -96,6 +96,14 @@ apt-get update
 apt-get install -y kubelet kubeadm kubectl
 ```
 
+这会安装最新版本的kubernetes，如果希望按照特定版本：
+
+```bash
+apt-get install kubelet=1.12.5-00 kubeadm=1.12.5-00 kubectl=1.12.5-00
+```
+
+具体有哪些可用的版本，可以看这里：https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-arm64/Packages
+
 ## 安装k8s
 
 > 同样： 想办法搞定全局翻墙。
