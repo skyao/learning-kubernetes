@@ -30,7 +30,7 @@ systemctl disable firewalld && systemctl stop firewalld
 
 ```bash
 $ docker --version
-Docker version 17.06.0-ce, build 02c1d87
+Docker version 18.09.1, build 4c52b90
 ```
 
 bridge-utils可以通过apt安装：
@@ -109,16 +109,23 @@ apt-get install kubelet=1.12.5-00 kubeadm=1.12.5-00 kubectl=1.12.5-00
 > 同样： 想办法搞定全局翻墙。
 
 ```bash
-sudo kubeadm init
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
+
+注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。
 
 输出如下：
 
 ```bash
-[init] Using Kubernetes version: v1.9.2
-[init] Using Authorization modes: [Node RBAC]
+[init] Using Kubernetes version: v1.13.2
+[preflight] Running pre-flight checks
+	[WARNING SystemVerification]: this Docker version is not on the list of validated versions: 18.09.1. Latest validated version: 18.06
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+
 ......
-[addons] Applied essential addon: kube-dns
+[addons] Applied essential addon: CoreDNS
 [addons] Applied essential addon: kube-proxy
 
 Your Kubernetes master has initialized successfully!
@@ -136,7 +143,7 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 You can now join any number of machines by running the following on each node
 as root:
 
-  kubeadm join --token d05a21.dfad690e77acc878 192.168.1.244:6443 --discovery-token-ca-cert-hash sha256:263c07847848652711ecbe62b128d4c7e4a24418995a49c78f4ec3753cf111d4
+  kubeadm join 192.168.0.108:6443 --token 00gz64.2no469l8gtc6zn7z --discovery-token-ca-cert-hash sha256:cca3a639e335bf437d2220d86482e767a6bfa81ca93d2531e6c30b4a09b17322
 ```
 
 为了使用普通用户，按照上面的提示执行：
@@ -147,40 +154,77 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-此时如果遇到执行命令时报如下错误：
+安装完成后，node处于NotReady状态：
 
 ```bash
-$ kubectl version
-Client Version: version.Info{Major:"1", Minor:"9", GitVersion:"v1.9.2", GitCommit:"5fa2db2bd46ac79e5e00a4e6ed24191080aa463b", GitTreeState:"clean", BuildDate:"2018-01-18T10:09:24Z", GoVersion:"go1.9.2", Compiler:"gc", Platform:"linux/amd64"}
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
+$ kubectl get node
+NAME      STATUS     ROLES    AGE     VERSION
+skywork   NotReady   master   6m12s   v1.13.2
 ```
 
-需要修改`/etc/kubernetes/manifests/kube-apiserver.yaml`文件，修改下列参数：
+kubectl describe 可以看到是因为没有安装 network plugin
 
 ```bash
-- --insecure-port=8080
+kubectl describe node skywork
+Name:               skywork
+Roles:              master
+......
+  Ready            False   Fri, 01 Feb 2019 22:52:18 +0800   Fri, 01 Feb 2019 22:45:44 +0800   KubeletNotReady              runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
 ```
 
-默认是0不打开，修改为8080即可。
-
-### 安装dashboard
-
-参考：
-
-- https://ithelp.ithome.com.tw/articles/10195385
-- https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
-- https://my.oschina.net/u/2306127/blog/1606599
+安装flannel：
 
 ```bash
-kubectl proxy
-Starting to serve on 127.0.0.1:8001
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml
 ```
 
-http://127.0.0.1:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login
+> 参考：
+
+稍等就可以看到 node 的状态变为 Ready了：
 
 ```bash
-kubectl proxy --address='0.0.0.0' --port=8001 --accept-hosts='^*$'
-Starting to serve on [::]:8001
+$ kubectl get node
+NAME      STATUS   ROLES    AGE   VERSION
+skywork   Ready    master   42m   v1.13.2
 ```
 
-http://192.168.0.10:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login
+最后，如果是测试用的单节点，为了让负载可以跑在k8s的master节点上，执行下列命令去除master的污点：
+
+```bash
+kubectl taint nodes --all node-role.kubernetes.io/master-
+```
+
+但是，如果没有设置 `--pod-network-cidr=10.244.0.0/16`，则kube-flannel-ds 的 pod，总是报错：
+
+```bash
+$ kubectl get pods --all-namespaces
+NAMESPACE     NAME                              READY   STATUS              RESTARTS   AGE
+......
+kube-system   kube-flannel-ds-amd64-jqrk8       0/1     Error               6          6m48s
+```
+
+从日志上看：
+
+```bash
+$ kubectl -n kube-system logs kube-flannel-ds-amd64-jqrk8
+I0201 15:33:40.001592       1 main.go:475] Determining IP address of default interface
+I0201 15:33:40.001794       1 main.go:488] Using interface with name wlp6s0 and address 192.168.0.108
+I0201 15:33:40.001805       1 main.go:505] Defaulting external address to interface address (192.168.0.108)
+I0201 15:33:40.102463       1 kube.go:131] Waiting 10m0s for node controller to sync
+I0201 15:33:40.102495       1 kube.go:294] Starting kube subnet manager
+I0201 15:33:41.102611       1 kube.go:138] Node controller sync successful
+I0201 15:33:41.102633       1 main.go:235] Created subnet manager: Kubernetes Subnet Manager - skywork
+I0201 15:33:41.102638       1 main.go:238] Installing signal handlers
+I0201 15:33:41.102710       1 main.go:353] Found network config - Backend type: vxlan
+I0201 15:33:41.102748       1 vxlan.go:120] VXLAN config: VNI=1 Port=0 GBP=false DirectRouting=false
+E0201 15:33:41.102897       1 main.go:280] Error registering network: failed to acquire lease: node "skywork" pod cidr not assigned
+I0201 15:33:41.102925       1 main.go:333] Stopping shutdownHandler...
+```
+
+就只能运行 `kubeadm reset` ，然后删除 .kube 目录，再次执行 `kubeadm init`。
+
+
+参考资料：
+
+- [Creating a single master cluster with kubeadm](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/): 这里有详细的flannel等network addon的安装设置
+- [Installing a pod network add-on](https://ithelp.ithome.com.tw/articles/10209632?sc=iThelpR)

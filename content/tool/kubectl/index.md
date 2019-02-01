@@ -11,11 +11,11 @@ kubectl是官方提供的客户端工具，可直接以命令行的方式同集�
 ## 资料
 
 - 官方文档
-	- [Overview of kubectl](https://kubernetes.io/docs/user-guide/kubectl-overview/)
-	- [kubectl](https://kubernetes.io/docs/user-guide/kubectl/)
-	- [v1.8 Commands](https://kubernetes.io/docs/user-guide/kubectl/v1.8/)
-	- [v1.7 Commands](https://kubernetes.io/docs/user-guide/kubectl/v1.7/)
-	- [Kubectl Cheatsheet](https://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
+  - [Overview of kubectl](https://kubernetes.io/docs/user-guide/kubectl-overview/):  中文翻译版本 [kubectl概述](https://kubernetes.io/zh/docs/user-guide/kubectl-overview/)
+  - [kubectl](https://kubernetes.io/docs/user-guide/kubectl/)
+  - [v1.8 Commands](https://kubernetes.io/docs/user-guide/kubectl/v1.8/)
+  - [v1.7 Commands](https://kubernetes.io/docs/user-guide/kubectl/v1.7/)
+  - [Kubectl Cheatsheet](https://kubernetes.io/docs/user-guide/kubectl-cheatsheet/)
 - [Kubectl Cheatsheet 中文版本](https://www.tuicool.com/articles/qm2A3qJ)
 
 ## 用法
