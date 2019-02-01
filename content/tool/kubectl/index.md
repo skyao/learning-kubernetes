@@ -1,7 +1,7 @@
 ---
 date: 2018-12-06T08:00:00+08:00
 title: kubectl
-weight: 610
+weight: 1110
 description : "kubectl介绍"
 ---
 

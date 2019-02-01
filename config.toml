@@ -149,27 +149,43 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	name   = "工具"
 	identifier = "tool"
 	url    = "/tool/"
-	weight = 600
+	weight = 1000
+
 
 [[menu.main]]
-	name   = "扩展"
+	name   = "kubectl"
+	identifier = "tool-kubectl"
+    	parent = "tool"
+	url    = "/tool/kubectl/"
+	weight = 1010
+
+[[menu.main]]
+	name   = "minikube"
+	identifier = "tool-minikube"
+    	parent = "tool"
+	url    = "/tool/minikube/"
+	weight = 1020
+
+[[menu.main]]
+	name   = "kubeadm"
+	identifier = "tool-kubeadm"
+    	parent = "tool"
+	url    = "/tool/kubeadm/"
+	weight = 1030
+
+[[menu.main]]
+	name   = "插件"
 	identifier = "addons"
 	url    = "/addons/"
-	weight = 500
+	weight = 1100
 
 [[menu.main]]
 	name   = "dashboard"
 	identifier = "addons-dashboard"
 	parent = "addons"
 	url    = "/addons/dashboard/"
-	weight = 500
+	weight = 1110
 
-[[menu.main]]
-	name   = "kubectl"
-	identifier = "tool-kubectl"
-    parent = "tool"
-	url    = "/tool/kubectl/"
-	weight = 310
 
 [[menu.main]]
 	name   = "多租户"
