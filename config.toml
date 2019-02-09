@@ -186,6 +186,11 @@ googleAnalytics = "c7442f5794ea2abb71c6ff05dc0b8779"
 	url    = "/addons/dashboard/"
 	weight = 1110
 
+[[menu.main]]
+	name   = "client-go"
+	identifier = "client-go"
+	url    = "/client-go/"
+	weight = 1200
 
 [[menu.main]]
 	name   = "多租户"
