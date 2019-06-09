@@ -194,6 +194,8 @@ skywork   Ready    master   42m   v1.13.2
 kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
 
+### network cidr 没有设置的问题
+
 但是，如果没有设置 `--pod-network-cidr=10.244.0.0/16`，则kube-flannel-ds 的 pod，总是报错：
 
 ```bash
@@ -223,8 +225,44 @@ I0201 15:33:41.102925       1 main.go:333] Stopping shutdownHandler...
 
 就只能运行 `kubeadm reset` ，然后删除 .kube 目录，再次执行 `kubeadm init`。
 
+### coredns crash的问题
 
-参考资料：
+如果遇到 coredns 总是CrashLoopBackOff：
+
+```bash
+$ kubectl get pods --all-namespaces
+NAMESPACE     NAME                              READY   STATUS             RESTARTS   AGE
+kube-system   coredns-fb8b8dccf-cfkcd           0/1     CrashLoopBackOff   2          113s
+kube-system   coredns-fb8b8dccf-t2tq5           0/1     CrashLoopBackOff   2          113s
+```
+
+可以查看log：
+
+```bash
+$ kubectl logs -f -n kube-system coredns-fb8b8dccf-cfkcd
+
+.:53
+2019-06-09T13:54:40.288Z [INFO] CoreDNS-1.3.1
+2019-06-09T13:54:40.288Z [INFO] linux/amd64, go1.11.4, 6b56a9c
+CoreDNS-1.3.1
+linux/amd64, go1.11.4, 6b56a9c
+2019-06-09T13:54:40.288Z [INFO] plugin/reload: Running configuration MD5 = 599b9eb76b8c147408aed6a0bbe0f669
+2019-06-09T13:54:41.751Z [FATAL] plugin/loop: Loop (127.0.0.1:57365 -> :53) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 3116341138164139510.3359948439978079754."
+```
+通常是和本机的DNS设置有关，比如我曾经设置了 `nameserver 127.0.0.1`，这条需要删除：
+
+```bash
+sudo vi /etc/resolv.conf
+
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+
+
+
+
+### 参考资料
 
 - [Creating a single master cluster with kubeadm](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/): 这里有详细的flannel等network addon的安装设置
 - [Installing a pod network add-on](https://ithelp.ithome.com.tw/articles/10209632?sc=iThelpR)
