@@ -1,7 +1,7 @@
 ---
 title: "Kubernetes资料收集"
 linkTitle: "资料收集"
-weight: 190
+weight: 1900
 date: 2021-02-01
 description: >
   收集Kubernetes的各种资料

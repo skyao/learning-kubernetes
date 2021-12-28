@@ -1,7 +1,7 @@
 ---
-title: "ubuntu下用 kubeadm 安装 kubenetes"
-linkTitle: "ubuntu"
-weight: 210
+title: "ubuntu 20.04下用 kubeadm 安装 kubenetes"
+linkTitle: "ubuntu 20.04"
+weight: 2110
 date: 2021-02-01
 description: >
   通过 kubeadm 在 ubuntu 上安装 kubenetes
@@ -11,8 +11,6 @@ description: >
 参考 Kubernetes 官方文档:
 
 - [Using kubeadm to Create a Cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-- https://my.oschina.net/u/2306127/blog/1922542
-- https://linuxconfig.org/how-to-install-kubernetes-on-ubuntu-18-04-bionic-beaver-linux
 - https://kubernetes.io/docs/setup/independent/install-kubeadm/
 
 ## 前期准备
@@ -22,15 +20,15 @@ description: >
 systemctl disable firewalld && systemctl stop firewalld
 ```
 
-### docker和bridge-utils
+### 安装docker和bridge-utils
 
-要求节点上安装有 docker version 1.2+ 和 bridge-utils (用来操作linux bridge).
+要求节点上安装有 docker (或者其他container runtime）和 bridge-utils (用来操作linux bridge).
 
 查看 docker 版本：
 
 ```bash
 $ docker --version
-Docker version 18.09.1, build 4c52b90
+Docker version 20.10.12, build e91ed57
 ```
 
 bridge-utils可以通过apt安装：
@@ -39,77 +37,194 @@ bridge-utils可以通过apt安装：
 sudo apt-get install bridge-utils
 ```
 
-### 注意事项
+### 设置iptables
 
-1. 如果在使用 kubeadm init 命令是 提示以下内容:
+要确保 `br_netfilter` 模块已经加载,可以通过运行 `lsmod | grep br_netfilter`来完成。
 
-    ```bash
-    [preflight] Some fatal errors occurred:
-        /proc/sys/net/bridge/bridge-nf-call-iptables contents are not set to 1
+```bash
+$ lsmod | grep br_netfilter
+br_netfilter           28672  0
+bridge                266240  1 br_netfilter
+```
+
+如需要明确加载，请调用 `sudo modprobe br_netfilter`。
+
+为了让作为Linux节点的iptables能看到桥接流量，应该确保 `net.bridge.bridge-nf-call-iptables` 在 sysctl 配置中被设置为1，执行命令：
+
+```bash
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+br_netfilter
+EOF
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl --system
+```
+
+### 禁用虚拟内存swap
+
+执行 `free -m` 命令检测:
+
+```bash
+$ free -m        
+              total        used        free      shared  buff/cache   available
+Mem:          15896        1665       11376          20        2854       13819
+Swap:             0           0           0
+```
+
+如果Swap这一行不是0，则说明虚拟内存swap被开启了，需要关闭。
+
+需要做两个事情：
+
+1. 操作系统安装时就不要设置swap分区，如果有，删除该swap分区
+
+2. 即使没有swap分区，也会开启swap，需要通过 `sudo vi /etc/fstab ` 找到swap 这一行：
+
+    ```properties
+    # 在swap分区这行前加 # 禁用掉swap
+    /swapfile                                 none            swap    sw              0       0
     ```
 
-    执行:
-    ```bash
-    echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
-    echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables
-    ```
+    重启之后再用 `free -m` 命令检测。
 
-1. 禁用虚拟内存swap
+### 设置docker的cgroup driver
 
-	如果报错如下：
+docker 默认的 cgroup driver 是 cgroupfs，可以通过 docker info 命令查看：
 
-	```bash
-    [preflight] Some fatal errors occurred:
-	running with swap on is not supported. Please disable swap
-	```
+```bash
+$ docker info | grep "Cgroup Driver"
+ Cgroup Driver: cgroupfs
+```
 
-	这说明我们开启了linux的swap虚拟内存,这里要求关闭。
+而 kubernetes 在v1.22版本之后，如果用户没有在 KubeletConfiguration 下设置 cgroupDriver 字段，则 kubeadm 将默认为 `systemd`。
 
-    参考文章： [Ubuntu 16.04 禁用启用虚拟内存swap](http://blog.csdn.net/csdn_duomaomao/article/details/75142769)
+需要修改 docker 的 cgroup driver 为 `systemd`, 方式为打开 docker 的配置文件（如果不存在则创建）
 
-    实测不重启电脑的方案无法生效，只好用需要重启的方案了。
+```bash
+sudo vi /etc/docker/daemon.json
+```
 
-    ```bash
-    mount -n -o remount,rw /
-    vi /etc/fstab
-    # 在swap分区这行前加 # 禁用掉，保存退出
-    reboot
-    # 看看是否生效
-    free -m
-	 ```
+增加内容：
 
-	实测发现，虽然当时生效了，但是过一段时间，虚拟内存又出现了。解决方式：通过磁盘工具将swap分区删除。
+```json
+{
+"exec-opts": ["native.cgroupdriver=systemd"]
+}
+```
+
+修改完成后重启 docker：
+
+```bash
+systemctl restart docker
+
+# 重启后检查一下
+docker info | grep "Cgroup Driver"
+```
+
+否则，在安装过程中，由于 cgroup driver 的不一致，`kubeadm init` 命令会因为 kubelet 无法启动而超时失败，报错为:
+
+```bash
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[kubelet-check] Initial timeout of 40s passed.
+
+Unfortunately, an error has occurred:
+        timed out waiting for the condition
+
+This error is likely caused by:
+        - The kubelet is not running
+        - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
+
+If you are on a systemd-powered system, you can try to troubleshoot the error with the following commands:
+        - 'systemctl status kubelet'
+        - 'journalctl -xeu kubelet'
+```
+
+执行 `systemctl status kubelet` 会发现 kubelet 因为报错而退出，执行 `journalctl -xeu kubelet` 会发现有如下的错误信息：
+
+```
+Dec 26 22:31:21 skyserver2 kubelet[132861]: I1226 22:31:21.438523  132861 docker_service.go:264] "Docker Info" dockerInfo=&{ID:AEON:SBVF:43UK:WASV:YIQK:QGGA:7RU3:IIDK:DV7M:6QLH:5ICJ:KT6R Containers:2 ContainersRunning:0 ContainersPaused:>
+Dec 26 22:31:21 skyserver2 kubelet[132861]: E1226 22:31:21.438616  132861 server.go:302] "Failed to run kubelet" err="failed to run Kubelet: misconfiguration: kubelet cgroup driver: \"systemd\" is different from docker cgroup driver: \"c>
+Dec 26 22:31:21 skyserver2 systemd[1]: kubelet.service: Main process exited, code=exited, status=1/FAILURE
+-- Subject: Unit process exited
+-- Defined-By: systemd
+-- Support: http://www.ubuntu.com/support
+-- 
+-- An ExecStart= process belonging to unit kubelet.service has exited.
+-- 
+-- The process' exit code is 'exited' and its exit status is 1.
+```
+
+参考：
+
+* https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/
+* https://blog.51cto.com/riverxyz/2537914
 
 ## 安装kubeadm
 
-> 切记： 想办法搞定全局翻墙，不然kubeadm安装是比较麻烦的。
+{{% alert title="切记" color="warning" %}}
+想办法搞定全局翻墙，不然kubeadm安装是非常麻烦的。
+{{% /alert %}}
 
 按照[官方文档](https://kubernetes.io/docs/setup/independent/install-kubeadm/)的指示，执行如下命令：
 
 ```bash
-apt-get update && apt-get install -y apt-transport-https
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
-EOF
+sudo -i
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl
+curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
 apt-get update
 apt-get install -y kubelet kubeadm kubectl
 ```
 
-这会安装最新版本的kubernetes，如果希望按照特定版本：
+这会安装最新版本的kubernetes:
+
+```bash
+......
+Unpacking kubeadm (1.23.1-00) ...
+Setting up conntrack (1:1.4.5-2) ...
+Setting up kubectl (1.23.1-00) ...
+Setting up ebtables (2.0.11-3build1) ...
+Setting up socat (1.7.3.3-2) ...
+Setting up cri-tools (1.19.0-00) ...
+Setting up kubernetes-cni (0.8.7-00) ...
+Setting up kubelet (1.23.1-00) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/kubelet.service → /lib/systemd/system/kubelet.service.
+Setting up kubeadm (1.23.1-00) ...
+
+# 查看版本
+$ kubeadm version
+kubeadm version: &version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.1", GitCommit:"86ec240af8cbd1b60bcc4c03c20da9b98005b92e", GitTreeState:"clean", BuildDate:"2021-12-16T11:39:51Z", GoVersion:"go1.17.5", Compiler:"gc", Platform:"linux/amd64"}
+
+$ kubelet --version
+Kubernetes v1.23.1
+
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.1", GitCommit:"86ec240af8cbd1b60bcc4c03c20da9b98005b92e", GitTreeState:"clean", BuildDate:"2021-12-16T11:41:01Z", GoVersion:"go1.17.5", Compiler:"gc", Platform:"linux/amd64"}
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+```
+
+如果希望安装特定版本：
 
 ```bash
 apt-get install kubelet=1.12.5-00 kubeadm=1.12.5-00 kubectl=1.12.5-00
 ```
 
-具体有哪些可用的版本，可以看这里：https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-arm64/Packages
+具体有哪些可用的版本，可以看这里：
+
+https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-arm64/Packages
 
 ## 安装k8s
 
-> 同样： 想办法搞定全局翻墙。
+{{% alert title="同样切记" color="warning" %}}
+想办法搞定全局翻墙。
+{{% /alert %}}
 
 ```bash
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 -v=9
 ```
 
 注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。
@@ -117,18 +232,9 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 输出如下：
 
 ```bash
-[init] Using Kubernetes version: v1.13.2
-[preflight] Running pre-flight checks
-	[WARNING SystemVerification]: this Docker version is not on the list of validated versions: 18.09.1. Latest validated version: 18.06
-[preflight] Pulling images required for setting up a Kubernetes cluster
-[preflight] This might take a minute or two, depending on the speed of your internet connection
-[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
-
 ......
-[addons] Applied essential addon: CoreDNS
-[addons] Applied essential addon: kube-proxy
 
-Your Kubernetes master has initialized successfully!
+Your Kubernetes control-plane has initialized successfully!
 
 To start using your cluster, you need to run the following as a regular user:
 
@@ -136,14 +242,18 @@ To start using your cluster, you need to run the following as a regular user:
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
 You should now deploy a pod network to the cluster.
 Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
   https://kubernetes.io/docs/concepts/cluster-administration/addons/
 
-You can now join any number of machines by running the following on each node
-as root:
+Then you can join any number of worker nodes by running the following on each as root:
 
-  kubeadm join 192.168.0.108:6443 --token 00gz64.2no469l8gtc6zn7z --discovery-token-ca-cert-hash sha256:cca3a639e335bf437d2220d86482e767a6bfa81ca93d2531e6c30b4a09b17322
+kubeadm join 192.168.0.51:6443 --token whebj8.vfxxs9to2abor4hn \
+	--discovery-token-ca-cert-hash sha256:9f18019e4cd03db707bed5ba140b9827c098c6653a5f6bccdd2579e7b33dba74 
 ```
 
 为了使用普通用户，按照上面的提示执行：
@@ -157,35 +267,33 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 安装完成后，node处于NotReady状态：
 
 ```bash
-$ kubectl get node
-NAME      STATUS     ROLES    AGE     VERSION
-skywork   NotReady   master   6m12s   v1.13.2
+$ kubectl get node  
+NAME         STATUS     ROLES                  AGE   VERSION
+skyserver2   NotReady   control-plane,master   8h    v1.23.1
 ```
 
 kubectl describe 可以看到是因为没有安装 network plugin
 
 ```bash
-kubectl describe node skywork
-Name:               skywork
-Roles:              master
+$ kubectl describe node skyserver2
+Name:               skyserver2
+Roles:              control-plane,master
 ......
-  Ready            False   Fri, 01 Feb 2019 22:52:18 +0800   Fri, 01 Feb 2019 22:45:44 +0800   KubeletNotReady              runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+    Ready            False   Mon, 27 Dec 2021 09:43:36 +0800   Mon, 27 Dec 2021 00:53:48 +0800   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
 ```
 
 安装flannel：
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 ```
-
-> 参考：
 
 稍等就可以看到 node 的状态变为 Ready了：
 
 ```bash
-$ kubectl get node
-NAME      STATUS   ROLES    AGE   VERSION
-skywork   Ready    master   42m   v1.13.2
+$ kubectl get node                                                                                           
+NAME         STATUS   ROLES                  AGE   VERSION
+skyserver2   Ready    control-plane,master   8h    v1.23.1
 ```
 
 最后，如果是测试用的单节点，为了让负载可以跑在k8s的master节点上，执行下列命令去除master的污点：
@@ -194,75 +302,29 @@ skywork   Ready    master   42m   v1.13.2
 kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
 
-### network cidr 没有设置的问题
+可以通过 `kubectl describe node skyserver2` 对比去除污点前后 node 信息中的 Taints 部分，去除污点前：
 
-但是，如果没有设置 `--pod-network-cidr=10.244.0.0/16`，则kube-flannel-ds 的 pod，总是报错：
-
-```bash
-$ kubectl get pods --all-namespaces
-NAMESPACE     NAME                              READY   STATUS              RESTARTS   AGE
-......
-kube-system   kube-flannel-ds-amd64-jqrk8       0/1     Error               6          6m48s
+```yaml
+Taints:             node.kubernetes.io/not-ready:NoExecute
+                    node-role.kubernetes.io/master:NoSchedule
+                    node.kubernetes.io/not-ready:NoSchedule
 ```
 
-从日志上看：
+去除污点后：
 
-```bash
-$ kubectl -n kube-system logs kube-flannel-ds-amd64-jqrk8
-I0201 15:33:40.001592       1 main.go:475] Determining IP address of default interface
-I0201 15:33:40.001794       1 main.go:488] Using interface with name wlp6s0 and address 192.168.0.108
-I0201 15:33:40.001805       1 main.go:505] Defaulting external address to interface address (192.168.0.108)
-I0201 15:33:40.102463       1 kube.go:131] Waiting 10m0s for node controller to sync
-I0201 15:33:40.102495       1 kube.go:294] Starting kube subnet manager
-I0201 15:33:41.102611       1 kube.go:138] Node controller sync successful
-I0201 15:33:41.102633       1 main.go:235] Created subnet manager: Kubernetes Subnet Manager - skywork
-I0201 15:33:41.102638       1 main.go:238] Installing signal handlers
-I0201 15:33:41.102710       1 main.go:353] Found network config - Backend type: vxlan
-I0201 15:33:41.102748       1 vxlan.go:120] VXLAN config: VNI=1 Port=0 GBP=false DirectRouting=false
-E0201 15:33:41.102897       1 main.go:280] Error registering network: failed to acquire lease: node "skywork" pod cidr not assigned
-I0201 15:33:41.102925       1 main.go:333] Stopping shutdownHandler...
+```yaml
+Taints:             <none>
 ```
 
-就只能运行 `kubeadm reset` ，然后删除 .kube 目录，再次执行 `kubeadm init`。
+### 失败重来
 
-### coredns crash的问题
+如果遇到安装失败，需要重新开始，或者想铲掉现有的安装，则可以：
 
-如果遇到 coredns 总是CrashLoopBackOff：
+1. 运行`kubeadm reset` 
+2. 删除 `.kube` 目录
+3. 再次执行 `kubeadm init`
 
-```bash
-$ kubectl get pods --all-namespaces
-NAMESPACE     NAME                              READY   STATUS             RESTARTS   AGE
-kube-system   coredns-fb8b8dccf-cfkcd           0/1     CrashLoopBackOff   2          113s
-kube-system   coredns-fb8b8dccf-t2tq5           0/1     CrashLoopBackOff   2          113s
-```
+## 将节点加入到集群
 
-可以查看log：
+如果有多个kubenetes节点（即多台机器），则需要将其他节点加入到集群中。
 
-```bash
-$ kubectl logs -f -n kube-system coredns-fb8b8dccf-cfkcd
-
-.:53
-2019-06-09T13:54:40.288Z [INFO] CoreDNS-1.3.1
-2019-06-09T13:54:40.288Z [INFO] linux/amd64, go1.11.4, 6b56a9c
-CoreDNS-1.3.1
-linux/amd64, go1.11.4, 6b56a9c
-2019-06-09T13:54:40.288Z [INFO] plugin/reload: Running configuration MD5 = 599b9eb76b8c147408aed6a0bbe0f669
-2019-06-09T13:54:41.751Z [FATAL] plugin/loop: Loop (127.0.0.1:57365 -> :53) detected for zone ".", see https://coredns.io/plugins/loop#troubleshooting. Query: "HINFO 3116341138164139510.3359948439978079754."
-```
-通常是和本机的DNS设置有关，比如我曾经设置了 `nameserver 127.0.0.1`，这条需要删除：
-
-```bash
-sudo vi /etc/resolv.conf
-
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-```
-
-
-
-
-
-### 参考资料
-
-- [Creating a single master cluster with kubeadm](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/): 这里有详细的flannel等network addon的安装设置
-- [Installing a pod network add-on](https://ithelp.ithome.com.tw/articles/10209632?sc=iThelpR)
