@@ -120,3 +120,9 @@ unset KUBECONFIG
 
 - [配置对多集群的访问](https://kubernetes.io/zh/docs/tasks/access-application-cluster/configure-access-multiple-clusters/#set-the-kubeconfig-environment-variable)
 
+## 取消docker和k8s的更新
+
+通过 apt 方式安装的 docker 和 k8s，会在 apt upgrade 时自动升级到最新版本，这未必安全，通常也没有必要。
+
+可以考虑取消docker和k8s的的 apt 更新，`cd /etc/apt/sources.list.d`，将 docker 和 k8s 的ppa配置文件内容用 "#" 注释掉就可以了。需要时可以重新打开。
+

@@ -184,38 +184,38 @@ apt-get install -y kubelet kubeadm kubectl
 
 ```bash
 ......
-Unpacking kubeadm (1.23.1-00) ...
 Setting up conntrack (1:1.4.5-2) ...
-Setting up kubectl (1.23.1-00) ...
+Setting up kubectl (1.23.5-00) ...
 Setting up ebtables (2.0.11-3build1) ...
 Setting up socat (1.7.3.3-2) ...
-Setting up cri-tools (1.19.0-00) ...
+Setting up cri-tools (1.23.0-00) ...
 Setting up kubernetes-cni (0.8.7-00) ...
-Setting up kubelet (1.23.1-00) ...
+Setting up kubelet (1.23.5-00) ...
 Created symlink /etc/systemd/system/multi-user.target.wants/kubelet.service → /lib/systemd/system/kubelet.service.
-Setting up kubeadm (1.23.1-00) ...
+Setting up kubeadm (1.23.5-00) ...
+Processing triggers for man-db (2.9.1-1) ...
 
 # 查看版本
 $ kubeadm version
-kubeadm version: &version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.1", GitCommit:"86ec240af8cbd1b60bcc4c03c20da9b98005b92e", GitTreeState:"clean", BuildDate:"2021-12-16T11:39:51Z", GoVersion:"go1.17.5", Compiler:"gc", Platform:"linux/amd64"}
+kubeadm version: &version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.5", GitCommit:"c285e781331a3785a7f436042c65c5641ce8a9e9", GitTreeState:"clean", BuildDate:"2022-03-16T15:57:37Z", GoVersion:"go1.17.8", Compiler:"gc", Platform:"linux/amd64"}
 
 $ kubelet --version
-Kubernetes v1.23.1
+Kubernetes v1.23.5
 
 $ kubectl version
-Client Version: version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.1", GitCommit:"86ec240af8cbd1b60bcc4c03c20da9b98005b92e", GitTreeState:"clean", BuildDate:"2021-12-16T11:41:01Z", GoVersion:"go1.17.5", Compiler:"gc", Platform:"linux/amd64"}
+Client Version: version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.5", GitCommit:"c285e781331a3785a7f436042c65c5641ce8a9e9", GitTreeState:"clean", BuildDate:"2022-03-16T15:58:47Z", GoVersion:"go1.17.8", Compiler:"gc", Platform:"linux/amd64"}
 The connection to the server localhost:8080 was refused - did you specify the right host or port?
 ```
 
 如果希望安装特定版本：
 
 ```bash
-apt-get install kubelet=1.12.5-00 kubeadm=1.12.5-00 kubectl=1.12.5-00
+apt-get install kubelet=1.23.5-00 kubeadm=1.23.5-00 kubectl=1.23.5-00
 ```
 
 具体有哪些可用的版本，可以看这里：
 
-https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-arm64/Packages
+https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64/Packages
 
 ## 安装k8s
 
@@ -225,9 +225,10 @@ https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-arm64/
 
 ```bash
 sudo kubeadm init --pod-network-cidr=10.244.0.0/16 -v=9
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.100.40 -v=9
 ```
 
-注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。
+注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。如果机器上有多个网卡，可以用 `--apiserver-advertise-address` 指定要使用的IP地址。
 
 输出如下：
 
@@ -252,8 +253,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.0.51:6443 --token whebj8.vfxxs9to2abor4hn \
-	--discovery-token-ca-cert-hash sha256:9f18019e4cd03db707bed5ba140b9827c098c6653a5f6bccdd2579e7b33dba74 
+kubeadm join 192.168.100.40:6443 --token uq5nqn.bppygpcqty6icec4 \
+	--discovery-token-ca-cert-hash sha256:51c13871cd25b122f3a743040327b98b1c19466d01e1804aa2547c047b83632b 
 ```
 
 为了使用普通用户，按照上面的提示执行：
@@ -268,18 +269,18 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ```bash
 $ kubectl get node  
-NAME         STATUS     ROLES                  AGE   VERSION
-skyserver2   NotReady   control-plane,master   8h    v1.23.1
+NAME        STATUS     ROLES                  AGE    VERSION
+skyserver   NotReady   control-plane,master   3m7s   v1.23.5
 ```
 
 kubectl describe 可以看到是因为没有安装 network plugin
 
 ```bash
-$ kubectl describe node skyserver2
-Name:               skyserver2
+$ kubectl describe node skyserver
+Name:               skyserver
 Roles:              control-plane,master
 ......
-    Ready            False   Mon, 27 Dec 2021 09:43:36 +0800   Mon, 27 Dec 2021 00:53:48 +0800   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+  Ready            False   Thu, 24 Mar 2022 13:57:21 +0000   Thu, 24 Mar 2022 13:57:06 +0000   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
 ```
 
 安装flannel：
@@ -292,8 +293,8 @@ kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Doc
 
 ```bash
 $ kubectl get node                                                                                           
-NAME         STATUS   ROLES                  AGE   VERSION
-skyserver2   Ready    control-plane,master   8h    v1.23.1
+NAME        STATUS   ROLES                  AGE     VERSION
+skyserver   Ready    control-plane,master   4m52s   v1.23.5
 ```
 
 最后，如果是测试用的单节点，为了让负载可以跑在k8s的master节点上，执行下列命令去除master的污点：
@@ -302,7 +303,7 @@ skyserver2   Ready    control-plane,master   8h    v1.23.1
 kubectl taint nodes --all node-role.kubernetes.io/master-
 ```
 
-可以通过 `kubectl describe node skyserver2` 对比去除污点前后 node 信息中的 Taints 部分，去除污点前：
+可以通过 `kubectl describe node skyserver` 对比去除污点前后 node 信息中的 Taints 部分，去除污点前：
 
 ```yaml
 Taints:             node.kubernetes.io/not-ready:NoExecute
@@ -324,7 +325,9 @@ Taints:             <none>
 2. 删除 `.kube` 目录
 3. 再次执行 `kubeadm init`
 
+如果网络设置有改动，则需要彻底的重置网络。
+
 ## 将节点加入到集群
 
-如果有多个kubenetes节点（即多台机器），则需要将其他节点加入到集群中。
+如果有多个kubenetes节点（即多台机器），则需要将其他节点加入到集群中。具体见下一章。
 
