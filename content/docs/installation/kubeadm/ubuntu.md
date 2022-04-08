@@ -289,6 +289,8 @@ Roles:              control-plane,master
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 ```
 
+> 备注：有时会遇到 raw.githubusercontent.com 这个域名被污染，解析为 127.0.0.1，导致无法访问。解决方法是访问 https://ipaddress.com/website/raw.githubusercontent.com 然后查看可用的IP地址，找一个速度最快的，在 `/etc/hosts` 文件中加入一行记录即可，如 `185.199.111.133         raw.githubusercontent.com` 。
+
 稍等就可以看到 node 的状态变为 Ready了：
 
 ```bash
@@ -317,6 +319,35 @@ Taints:             node.kubernetes.io/not-ready:NoExecute
 Taints:             <none>
 ```
 
+### 常见问题
+
+有时会遇到 coredns pod无法创建的情况:
+
+```bash
+$ k get pods -A                                                                                              
+NAMESPACE     NAME                                READY   STATUS              RESTARTS   AGE
+kube-system   coredns-64897985d-9z82d             0/1     ContainerCreating   0          82s
+kube-system   coredns-64897985d-wkzc7             0/1     ContainerCreating   0          82s
+```
+
+问题发生在 flannel 上：
+
+```bash
+$ k describe pods -n kube-system coredns-64897985d-9z82d
+......
+  Warning  FailedCreatePodSandBox  100s                 kubelet            Failed to create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container "675b91ac9d25f0385d3794847f47c94deac2cb712399c21da59cf90e7cccb246" network for pod "coredns-64897985d-9z82d": networkPlugin cni failed to set up pod "coredns-64897985d-9z82d_kube-system" network: open /run/flannel/subnet.env: no such file or directory
+  Normal   SandboxChanged          97s (x12 over 108s)  kubelet            Pod sandbox changed, it will be killed and re-created.
+  Warning  FailedCreatePodSandBox  96s (x4 over 99s)    kubelet            (combined from similar events): Failed to create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container "b46dcd8abb9ab0787fdb2ab9f33ebf052c2dd1ad091c006974a3db7716904196" network for pod "coredns-64897985d-9z82d": networkPlugin cni failed to set up pod "coredns-64897985d-9z82d_kube-system" network: open /run/flannel/subnet.env: no such file or directory
+```
+
+解决的方式就是重新执行:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+```
+
+备注：这个问题只遇到过一次。
+
 ### 失败重来
 
 如果遇到安装失败，需要重新开始，或者想铲掉现有的安装，则可以：
@@ -325,7 +356,7 @@ Taints:             <none>
 2. 删除 `.kube` 目录
 3. 再次执行 `kubeadm init`
 
-如果网络设置有改动，则需要彻底的重置网络。
+如果网络设置有改动，则需要彻底的重置网络。具体见下一章。
 
 ## 将节点加入到集群
 
