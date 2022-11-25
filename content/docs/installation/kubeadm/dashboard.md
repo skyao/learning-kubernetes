@@ -14,10 +14,20 @@ description: >
 
 ## 部署dashboard
 
+在下面地址上查看当前dashboard的版本：
+
+https://github.com/kubernetes/dashboard/releases 
+
+根据对kubernetes版本的兼容情况选择对应的dashboard的版本：
+
+- dashboard 2.7 ： 全面兼容 k8s 1.25
+- dashboard 2.6.1 ： 全面兼容 k8s 1.24
+- dashboard 2.5.1： 全面兼容 k8s 1.23
+
 通过如下命令部署：
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.1/aio/deploy/recommended.yaml
 ```
 
 其中版本号可以查看 https://github.com/kubernetes/dashboard/releases

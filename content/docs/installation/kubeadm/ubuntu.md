@@ -28,7 +28,7 @@ systemctl disable firewalld && systemctl stop firewalld
 
 ```bash
 $ docker --version
-Docker version 20.10.12, build e91ed57
+Docker version 20.10.21, build baeda1f
 ```
 
 bridge-utils可以通过apt安装：
@@ -43,8 +43,8 @@ sudo apt-get install bridge-utils
 
 ```bash
 $ lsmod | grep br_netfilter
-br_netfilter           28672  0
-bridge                266240  1 br_netfilter
+br_netfilter           32768  0
+bridge                307200  1 br_netfilter
 ```
 
 如需要明确加载，请调用 `sudo modprobe br_netfilter`。
@@ -184,26 +184,29 @@ apt-get install -y kubelet kubeadm kubectl
 
 ```bash
 ......
-Setting up conntrack (1:1.4.5-2) ...
-Setting up kubectl (1.23.5-00) ...
-Setting up ebtables (2.0.11-3build1) ...
-Setting up socat (1.7.3.3-2) ...
-Setting up cri-tools (1.23.0-00) ...
-Setting up kubernetes-cni (0.8.7-00) ...
-Setting up kubelet (1.23.5-00) ...
+Setting up conntrack (1:1.4.6-2build2) ...
+Setting up kubectl (1.25.4-00) ...
+Setting up ebtables (2.0.11-4build2) ...
+Setting up socat (1.7.4.1-3ubuntu4) ...
+Setting up cri-tools (1.25.0-00) ...
+Setting up kubernetes-cni (1.1.1-00) ...
+Setting up kubelet (1.25.4-00) ...
 Created symlink /etc/systemd/system/multi-user.target.wants/kubelet.service → /lib/systemd/system/kubelet.service.
-Setting up kubeadm (1.23.5-00) ...
-Processing triggers for man-db (2.9.1-1) ...
+Setting up kubeadm (1.25.4-00) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for doc-base (0.11.1) ...
+Processing 1 added doc-base file...
 
 # 查看版本
 $ kubeadm version
-kubeadm version: &version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.5", GitCommit:"c285e781331a3785a7f436042c65c5641ce8a9e9", GitTreeState:"clean", BuildDate:"2022-03-16T15:57:37Z", GoVersion:"go1.17.8", Compiler:"gc", Platform:"linux/amd64"}
+kubeadm version: &version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.4", GitCommit:"872a965c6c6526caa949f0c6ac028ef7aff3fb78", GitTreeState:"clean", BuildDate:"2022-11-09T13:35:06Z", GoVersion:"go1.19.3", Compiler:"gc", Platform:"linux/amd64"}
 
 $ kubelet --version
-Kubernetes v1.23.5
+Kubernetes v1.25.4
 
 $ kubectl version
-Client Version: version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.5", GitCommit:"c285e781331a3785a7f436042c65c5641ce8a9e9", GitTreeState:"clean", BuildDate:"2022-03-16T15:58:47Z", GoVersion:"go1.17.8", Compiler:"gc", Platform:"linux/amd64"}
+Client Version: version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.4", GitCommit:"872a965c6c6526caa949f0c6ac028ef7aff3fb78", GitTreeState:"clean", BuildDate:"2022-11-09T13:36:36Z", GoVersion:"go1.19.3", Compiler:"gc", Platform:"linux/amd64"}
+Kustomize Version: v4.5.7
 The connection to the server localhost:8080 was refused - did you specify the right host or port?
 ```
 
@@ -211,11 +214,17 @@ The connection to the server localhost:8080 was refused - did you specify the ri
 
 ```bash
 apt-get install kubelet=1.23.5-00 kubeadm=1.23.5-00 kubectl=1.23.5-00
+
+apt-get install kubelet=1.23.14-00 kubeadm=1.23.14-00 kubectl=1.23.14-00
+
+apt-get install kubelet=1.24.8-00 kubeadm=1.24.8-00 kubectl=1.24.8-00
 ```
 
 具体有哪些可用的版本，可以看这里：
 
 https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64/Packages
+
+由于 kubernetes 1.25 之后默认使用 
 
 ## 安装k8s
 
@@ -230,7 +239,23 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address
 
 注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。如果机器上有多个网卡，可以用 `--apiserver-advertise-address` 指定要使用的IP地址。
 
-输出如下：
+如果遇到报错:
+
+```bash
+[preflight] Some fatal errors occurred:
+	[ERROR CRI]: container runtime is not running: output: E1125 11:16:01.799551   14661 remote_runtime.go:948] "Status from runtime service failed" err="rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
+time="2022-11-25T11:16:01+08:00" level=fatal msg="getting status of runtime: rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
+, error: exit status 1
+```
+
+则可以执行下列命令之后重新尝试 kubeadm init：
+
+```bash
+$ rm -rf /etc/containerd/config.toml 
+$ systemctl restart containerd.service
+```
+
+kubeadm init 输出如下：
 
 ```bash
 ......
