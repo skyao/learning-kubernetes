@@ -1,67 +1,49 @@
 ---
-title: "ubuntu 20.04下用 kubeadm 安装 kubenetes"
-linkTitle: "ubuntu 20.04"
-weight: 2110
+title: "ubuntu 下用 kubeadm 安装 kubenetes"
+linkTitle: "ubuntu"
+weight: 10
 date: 2021-02-01
 description: >
   通过 kubeadm 在 ubuntu 上安装 kubenetes
 ---
 
+以 ubuntu server 22.04 为例，参考 Kubernetes 官方文档:
 
-参考 Kubernetes 官方文档:
-
-- [Using kubeadm to Create a Cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-- https://kubernetes.io/docs/setup/independent/install-kubeadm/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/
 
 ## 前期准备
 
-### 关闭防火墙
-```bash
-systemctl disable firewalld && systemctl stop firewalld
-```
+### 检查 docker 版本
 
-### 安装docker和bridge-utils
+{{% alert title="注意" color="warning" %}}
+暂时固定使用 docker 和 k8s 的特定版本搭配：
 
-要求节点上安装有 docker (或者其他container runtime）和 bridge-utils (用来操作linux bridge).
+- docker： 20.10.21
+- k8s： 1.23.14
 
-查看 docker 版本：
+具体原因请见最下面的解释。
 
-```bash
-$ docker --version
-Docker version 20.10.21, build baeda1f
-```
+{{% /alert %}}
 
-bridge-utils可以通过apt安装：
+### 检查 container 配置
 
 ```bash
-sudo apt-get install bridge-utils
+sudo vi /etc/containerd/config.toml
 ```
 
-### 设置iptables
-
-要确保 `br_netfilter` 模块已经加载,可以通过运行 `lsmod | grep br_netfilter`来完成。
+确保文件不存在或者一下这行内容被注释:
 
 ```bash
-$ lsmod | grep br_netfilter
-br_netfilter           32768  0
-bridge                307200  1 br_netfilter
+# disabled_plugins = ["cri"]
 ```
 
-如需要明确加载，请调用 `sudo modprobe br_netfilter`。
-
-为了让作为Linux节点的iptables能看到桥接流量，应该确保 `net.bridge.bridge-nf-call-iptables` 在 sysctl 配置中被设置为1，执行命令：
+修改之后需要重启 containerd：
 
 ```bash
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-br_netfilter
-EOF
-
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-EOF
-sudo sysctl --system
+sudo systemctl restart containerd.service
 ```
+
+> 备注：如果不做这个修改，k8s 安装时会报错 “CRI v1 runtime API is not implemented”。
 
 ### 禁用虚拟内存swap
 
@@ -89,144 +71,83 @@ Swap:             0           0           0
 
     重启之后再用 `free -m` 命令检测。
 
-### 设置docker的cgroup driver
-
-docker 默认的 cgroup driver 是 cgroupfs，可以通过 docker info 命令查看：
-
-```bash
-$ docker info | grep "Cgroup Driver"
- Cgroup Driver: cgroupfs
-```
-
-而 kubernetes 在v1.22版本之后，如果用户没有在 KubeletConfiguration 下设置 cgroupDriver 字段，则 kubeadm 将默认为 `systemd`。
-
-需要修改 docker 的 cgroup driver 为 `systemd`, 方式为打开 docker 的配置文件（如果不存在则创建）
-
-```bash
-sudo vi /etc/docker/daemon.json
-```
-
-增加内容：
-
-```json
-{
-"exec-opts": ["native.cgroupdriver=systemd"]
-}
-```
-
-修改完成后重启 docker：
-
-```bash
-systemctl restart docker
-
-# 重启后检查一下
-docker info | grep "Cgroup Driver"
-```
-
-否则，在安装过程中，由于 cgroup driver 的不一致，`kubeadm init` 命令会因为 kubelet 无法启动而超时失败，报错为:
-
-```bash
-[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
-[kubelet-check] Initial timeout of 40s passed.
-
-Unfortunately, an error has occurred:
-        timed out waiting for the condition
-
-This error is likely caused by:
-        - The kubelet is not running
-        - The kubelet is unhealthy due to a misconfiguration of the node in some way (required cgroups disabled)
-
-If you are on a systemd-powered system, you can try to troubleshoot the error with the following commands:
-        - 'systemctl status kubelet'
-        - 'journalctl -xeu kubelet'
-```
-
-执行 `systemctl status kubelet` 会发现 kubelet 因为报错而退出，执行 `journalctl -xeu kubelet` 会发现有如下的错误信息：
-
-```
-Dec 26 22:31:21 skyserver2 kubelet[132861]: I1226 22:31:21.438523  132861 docker_service.go:264] "Docker Info" dockerInfo=&{ID:AEON:SBVF:43UK:WASV:YIQK:QGGA:7RU3:IIDK:DV7M:6QLH:5ICJ:KT6R Containers:2 ContainersRunning:0 ContainersPaused:>
-Dec 26 22:31:21 skyserver2 kubelet[132861]: E1226 22:31:21.438616  132861 server.go:302] "Failed to run kubelet" err="failed to run Kubelet: misconfiguration: kubelet cgroup driver: \"systemd\" is different from docker cgroup driver: \"c>
-Dec 26 22:31:21 skyserver2 systemd[1]: kubelet.service: Main process exited, code=exited, status=1/FAILURE
--- Subject: Unit process exited
--- Defined-By: systemd
--- Support: http://www.ubuntu.com/support
--- 
--- An ExecStart= process belonging to unit kubelet.service has exited.
--- 
--- The process' exit code is 'exited' and its exit status is 1.
-```
-
-参考：
-
-* https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/
-* https://blog.51cto.com/riverxyz/2537914
-
 ## 安装kubeadm
 
 {{% alert title="切记" color="warning" %}}
-想办法搞定全局翻墙，不然kubeadm安装是非常麻烦的。
+想办法搞定全局翻墙，不然 kubeadm 安装是非常麻烦的。
 {{% /alert %}}
 
-按照[官方文档](https://kubernetes.io/docs/setup/independent/install-kubeadm/)的指示，执行如下命令：
+执行如下命令：
 
 ```bash
-sudo -i
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl
-curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
 
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
 ```
 
-这会安装最新版本的kubernetes:
+### ~~安装最新版本~~
 
 ```bash
-......
-Setting up conntrack (1:1.4.6-2build2) ...
-Setting up kubectl (1.25.4-00) ...
-Setting up ebtables (2.0.11-4build2) ...
-Setting up socat (1.7.4.1-3ubuntu4) ...
-Setting up cri-tools (1.25.0-00) ...
-Setting up kubernetes-cni (1.1.1-00) ...
-Setting up kubelet (1.25.4-00) ...
-Created symlink /etc/systemd/system/multi-user.target.wants/kubelet.service → /lib/systemd/system/kubelet.service.
-Setting up kubeadm (1.25.4-00) ...
-Processing triggers for man-db (2.10.2-1) ...
-Processing triggers for doc-base (0.11.1) ...
-Processing 1 added doc-base file...
+sudo apt-get install -y kubelet kubeadm kubectl
+```
 
-# 查看版本
-$ kubeadm version
-kubeadm version: &version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.4", GitCommit:"872a965c6c6526caa949f0c6ac028ef7aff3fb78", GitTreeState:"clean", BuildDate:"2022-11-09T13:35:06Z", GoVersion:"go1.19.3", Compiler:"gc", Platform:"linux/amd64"}
+安装完成后
 
-$ kubelet --version
-Kubernetes v1.25.4
+```bash
+kubectl version --output=yaml
+```
 
-$ kubectl version
-Client Version: version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.4", GitCommit:"872a965c6c6526caa949f0c6ac028ef7aff3fb78", GitTreeState:"clean", BuildDate:"2022-11-09T13:36:36Z", GoVersion:"go1.19.3", Compiler:"gc", Platform:"linux/amd64"}
-Kustomize Version: v4.5.7
+查看 kubectl 版本：
+
+```bash
+clientVersion:
+  buildDate: "2023-06-14T09:53:42Z"
+  compiler: gc
+  gitCommit: 25b4e43193bcda6c7328a6d147b1fb73a33f1598
+  gitTreeState: clean
+  gitVersion: v1.27.3
+  goVersion: go1.20.5
+  major: "1"
+  minor: "27"
+  platform: linux/amd64
+kustomizeVersion: v5.0.1
+
 The connection to the server localhost:8080 was refused - did you specify the right host or port?
 ```
+
+查看 kubeadm 版本：
+
+```bash
+kubeadm version 
+kubeadm version: &version.Info{Major:"1", Minor:"27", GitVersion:"v1.27.3", GitCommit:"25b4e43193bcda6c7328a6d147b1fb73a33f1598", GitTreeState:"clean", BuildDate:"2023-06-14T09:52:26Z", GoVersion:"go1.20.5", Compiler:"gc", Platform:"linux/amd64"}
+```
+
+查看 kubelet 版本：
+
+```bash
+kubelet --version
+Kubernetes v1.27.3
+```
+
+### 安装特定版本
 
 如果希望安装特定版本：
 
 ```bash
-apt-get install kubelet=1.23.5-00 kubeadm=1.23.5-00 kubectl=1.23.5-00
-
-apt-get install kubelet=1.23.14-00 kubeadm=1.23.14-00 kubectl=1.23.14-00
-
-apt-get install kubelet=1.24.8-00 kubeadm=1.24.8-00 kubectl=1.24.8-00
+sudo apt-get install kubelet=1.23.14-00 kubeadm=1.23.14-00 kubectl=1.23.14-00
 ```
 
 具体有哪些可用的版本，可以看这里：
 
 https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64/Packages
 
-由于 kubernetes 1.25 之后默认使用 
-
 ## 安装k8s
+
+> 参考：https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 
 {{% alert title="同样切记" color="warning" %}}
 想办法搞定全局翻墙。
@@ -238,22 +159,6 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address
 ```
 
 注意后面为了使用 CNI network 和 Flannel，我们在这里设置了 `--pod-network-cidr=10.244.0.0/16`，如果不加这个设置，Flannel 会一直报错。如果机器上有多个网卡，可以用 `--apiserver-advertise-address` 指定要使用的IP地址。
-
-如果遇到报错:
-
-```bash
-[preflight] Some fatal errors occurred:
-	[ERROR CRI]: container runtime is not running: output: E1125 11:16:01.799551   14661 remote_runtime.go:948] "Status from runtime service failed" err="rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
-time="2022-11-25T11:16:01+08:00" level=fatal msg="getting status of runtime: rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
-, error: exit status 1
-```
-
-则可以执行下列命令之后重新尝试 kubeadm init：
-
-```bash
-$ rm -rf /etc/containerd/config.toml 
-$ systemctl restart containerd.service
-```
 
 kubeadm init 输出如下：
 
@@ -278,8 +183,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.100.40:6443 --token uq5nqn.bppygpcqty6icec4 \
-	--discovery-token-ca-cert-hash sha256:51c13871cd25b122f3a743040327b98b1c19466d01e1804aa2547c047b83632b 
+kubeadm join 192.168.0.57:6443 --token gwr923.gctdq2sr423mrwp7 \
+	--discovery-token-ca-cert-hash sha256:ad86f4eb0d430fc1bdf784ae655dccdcb14881cd4ca8d03d84cd2135082c4892 
 ```
 
 为了使用普通用户，按照上面的提示执行：
@@ -301,14 +206,16 @@ skyserver   NotReady   control-plane,master   3m7s   v1.23.5
 kubectl describe 可以看到是因为没有安装 network plugin
 
 ```bash
-$ kubectl describe node skyserver
-Name:               skyserver
-Roles:              control-plane,master
+$ kubectl describe node ubuntu2204 
+Name:               ubuntu2204
+Roles:              control-plane
+
 ......
-  Ready            False   Thu, 24 Mar 2022 13:57:21 +0000   Thu, 24 Mar 2022 13:57:06 +0000   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+
+  Ready            False   Wed, 28 Jun 2023 16:53:27 +0000   Wed, 28 Jun 2023 16:52:41 +0000   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized
 ```
 
-安装flannel：
+安装 flannel 作为 pod network add-on：
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
@@ -324,10 +231,13 @@ NAME        STATUS   ROLES                  AGE     VERSION
 skyserver   Ready    control-plane,master   4m52s   v1.23.5
 ```
 
-最后，如果是测试用的单节点，为了让负载可以跑在k8s的master节点上，执行下列命令去除master的污点：
+最后，如果是测试用的单节点，为了让负载可以跑在 k8s 的 master 节点上，执行下列命令去除 master/control-plane 的污点：
 
 ```bash
-kubectl taint nodes --all node-role.kubernetes.io/master-
+# 以前的污点名为 master
+# kubectl taint nodes --all node-role.kubernetes.io/master-
+# 新版本污点名改为 control-plane （master政治不正确）
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
 可以通过 `kubectl describe node skyserver` 对比去除污点前后 node 信息中的 Taints 部分，去除污点前：
@@ -344,36 +254,91 @@ Taints:             node.kubernetes.io/not-ready:NoExecute
 Taints:             <none>
 ```
 
-### 常见问题
 
-有时会遇到 coredns pod无法创建的情况:
 
-```bash
-$ k get pods -A                                                                                              
-NAMESPACE     NAME                                READY   STATUS              RESTARTS   AGE
-kube-system   coredns-64897985d-9z82d             0/1     ContainerCreating   0          82s
-kube-system   coredns-64897985d-wkzc7             0/1     ContainerCreating   0          82s
-```
+## 常见问题
 
-问题发生在 flannel 上：
+### CRI v1 runtime API is not implemented
+
+如果类似的报错（新版本）：
 
 ```bash
-$ k describe pods -n kube-system coredns-64897985d-9z82d
-......
-  Warning  FailedCreatePodSandBox  100s                 kubelet            Failed to create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container "675b91ac9d25f0385d3794847f47c94deac2cb712399c21da59cf90e7cccb246" network for pod "coredns-64897985d-9z82d": networkPlugin cni failed to set up pod "coredns-64897985d-9z82d_kube-system" network: open /run/flannel/subnet.env: no such file or directory
-  Normal   SandboxChanged          97s (x12 over 108s)  kubelet            Pod sandbox changed, it will be killed and re-created.
-  Warning  FailedCreatePodSandBox  96s (x4 over 99s)    kubelet            (combined from similar events): Failed to create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container "b46dcd8abb9ab0787fdb2ab9f33ebf052c2dd1ad091c006974a3db7716904196" network for pod "coredns-64897985d-9z82d": networkPlugin cni failed to set up pod "coredns-64897985d-9z82d_kube-system" network: open /run/flannel/subnet.env: no such file or directory
+[preflight] Some fatal errors occurred:
+	[ERROR CRI]: container runtime is not running: output: time="2023-06-28T16:12:49Z" level=fatal msg="validate service connection: CRI v1 runtime API is not implemented for endpoint \"unix:///var/run/containerd/containerd.sock\": rpc error: code = Unimplemented desc = unknown service runtime.v1.RuntimeService"
+, error: exit status 1
 ```
 
-解决的方式就是重新执行:
+或者报错（老一些的版本）:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+[preflight] Some fatal errors occurred:
+	[ERROR CRI]: container runtime is not running: output: E1125 11:16:01.799551   14661 remote_runtime.go:948] "Status from runtime service failed" err="rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
+time="2022-11-25T11:16:01+08:00" level=fatal msg="getting status of runtime: rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService"
+, error: exit status 1
 ```
 
-备注：这个问题只遇到过一次。
+这都是因为 containerd 的默认配置文件中 disable 了 CRI 的原因，可以打开文件 `/etc/containerd/config.toml ` 看到这行
 
-### 失败重来
+```properties
+disabled_plugins = ["cri"]
+```
+
+将这行注释之后，重启 containerd ：
+
+```bash
+sudo systemctl restart containerd.service
+```
+
+之后重新尝试 kubeadm init。
+
+参考:
+
+- https://forum.linuxfoundation.org/discussion/862825/kubeadm-init-error-cri-v1-runtime-api-is-not-implemented
+
+### 控制平面不启动或者异常重启
+
+安装最新版本（1.27 / 1.25）完成显示成功，但是控制平面没有启动，6443 端口无法连接：
+
+```bash
+k get node       
+
+E0628 16:34:50.966940    6581 memcache.go:265] couldn't get current server API group list: Get "https://192.168.0.57:6443/api?timeout=32s": read tcp 192.168.0.57:41288->192.168.0.1:7890: read: connection reset by peer - error from a previous attempt: read tcp 192.168.0.57:41276->192.168.0.1:7890: read: connection reset by peer
+```
+
+使用中发现控制平面经常不稳定， 大量的 pod 在反复重启，日志中有提示：pod sandbox changed。
+
+记录测试验证有问题的版本：
+
+- kubeadm： 1.27.3 / 1.25.6
+- kubelet：1.27.3 / 1.25.6
+- docker： 24.0.2 / 20.10.21
+
+尝试回退 docker 版本，k8s 1.27 的 changelog 中，
+
+https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md 提到的 docker 版本是 v20.10.21 （incompatible 是什么鬼?) ：
+
+```
+github.com/docker/docker: v20.10.18+incompatible → v20.10.21+incompatible
+```
+
+这个 v20.10.21 版本我翻了一下我之前的安装记录，非常凑巧之前是有使用这个 docker 版本的，而且稳定没出问题。因此考虑换到这个版本：
+
+```bash
+VERSION_STRING=5:20.10.21~3-0~ubuntu-jammy
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+k8s 暂时固定选择 1.23.14 这个经过验证的版本：
+
+```bash
+sudo apt-get install kubelet=1.23.14-00 kubeadm=1.23.14-00 kubectl=1.23.14-00
+```
+
+> 备注： 1.27.3 / 1.25.6 这两个 k8s 的版本都验证过会有问题，暂时不清楚原因，先固定用 1.23.14。
+>
+> 后续再排查。
+
+## 失败重来
 
 如果遇到安装失败，需要重新开始，或者想铲掉现有的安装，则可以：
 

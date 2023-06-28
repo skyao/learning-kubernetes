@@ -11,7 +11,32 @@ description: >
 
 - https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
-## 安装
+## 分步骤安装
+
+和后面安装 kubeadm 方式一样，只是这里只需要安装 kubectl 一个工具，不需要安装 kubeadm 和 kublete
+
+执行如下命令：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+```
+
+k8s 暂时固定使用 1.23.14 版本：
+
+```bash
+sudo apt-get install kubectl=1.23.14-00
+# sudo apt-get install kubelet=1.23.14-00 kubeadm=1.23.14-00 kubectl=1.23.14-00
+```
+
+## ~~直接安装~~
+
+不推荐这样安装，会安装最新版本，而且安装目录是  `/usr/local/bin/` 。
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
