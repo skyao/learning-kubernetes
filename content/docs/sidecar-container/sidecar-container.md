@@ -35,6 +35,7 @@ reference: [kubernetes/enhancements#753](https://github.com/kubernetes/enhanceme
 - [Sidecar container lifecycle changes in Kubernetes 1.18](https://banzaicloud.com/blog/k8s-sidecars/)
 - [Tutorial: Apply the Sidecar Pattern to Deploy Redis in Kubernetes](https://thenewstack.io/tutorial-apply-the-sidecar-pattern-to-deploy-redis-in-kubernetes/)
 - [Sidecar Containers](https://imroc.io/learning-kubernetes/kep/sidecar-containers.html)：by 陈鹏，特别鸣谢
+- [Kubernetes Sidecar Container – Best Practices and Examples](https://spacelift.io/blog/kubernetes-sidecar-container)
 
 ## 相关项目的处理
 
