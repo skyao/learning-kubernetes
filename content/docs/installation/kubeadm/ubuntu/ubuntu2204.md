@@ -1,10 +1,10 @@
 ---
-title: "ubuntu 下用 kubeadm 安装 kubenetes"
-linkTitle: "ubuntu"
+title: "ubuntu22.04上用kubeadm安装kubenetes"
+linkTitle: "ubuntu22.04"
 weight: 10
 date: 2021-02-01
 description: >
-  通过 kubeadm 在 ubuntu 上安装 kubenetes
+  通过 kubeadm 在 ubuntu 22.04 上安装 kubenetes
 ---
 
 以 ubuntu server 22.04 为例，参考 Kubernetes 官方文档:
