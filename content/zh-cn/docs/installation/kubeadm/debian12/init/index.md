@@ -160,16 +160,78 @@ Conditions:
 
 ### 安装 flannel
 
+参考官方文档： https://github.com/flannel-io/flannel#deploying-flannel-with-kubectl
+
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+```
+
+如果一切正常，就能看到 k8s 集群内的 pod 都启动完成状态为 Running：
+
+```bash
+k get pods -A
+NAMESPACE      NAME                               READY   STATUS    RESTARTS        AGE
+kube-flannel   kube-flannel-ds-ts6n8              1/1     Running   7 (9m27s ago)   15m
+kube-system    coredns-668d6bf9bc-rbkzb           1/1     Running   0               3h55m
+kube-system    coredns-668d6bf9bc-vbltg           1/1     Running   0               3h55m
+kube-system    etcd-debian12                      1/1     Running   0               3h55m
+kube-system    kube-apiserver-debian12            1/1     Running   1 (5h57m ago)   3h55m
+kube-system    kube-controller-manager-debian12   1/1     Running   0               3h55m
+kube-system    kube-proxy-95ccr                   1/1     Running   0               3h55m
+kube-system    kube-scheduler-debian12            1/1     Running   1 (6h15m ago)   3h55m
+```
+
+如果发现 kube-flannel-ds pod 的状态总是 CrashLoopBackOff：
+
+```bash
+ k get pods -A
+NAMESPACE      NAME                               READY   STATUS              RESTARTS        AGE
+kube-flannel   kube-flannel-ds-ts6n8              0/1     CrashLoopBackOff    2 (22s ago)     42s
+```
+
+继续查看 pod 的具体错误信息：
+
+```bash
+k describe pods -n kube-flannel kube-flannel-ds-ts6n8
+```
+
+发现报错 "Back-off restarting failed container kube-flannel in pod kube-flannel"：
+
+```bash
+Events:
+  Type     Reason     Age                 From               Message
+  ----     ------     ----                ----               -------
+  Normal   Scheduled  117s                default-scheduler  Successfully assigned kube-flannel/kube-flannel-ds-ts6n8 to debian12
+  Normal   Pulled     116s                kubelet            Container image "ghcr.io/flannel-io/flannel-cni-plugin:v1.6.2-flannel1" already present on machine
+  Normal   Created    116s                kubelet            Created container: install-cni-plugin
+  Normal   Started    116s                kubelet            Started container install-cni-plugin
+  Normal   Pulled     115s                kubelet            Container image "ghcr.io/flannel-io/flannel:v0.26.4" already present on machine
+  Normal   Created    115s                kubelet            Created container: install-cni
+  Normal   Started    115s                kubelet            Started container install-cni
+  Normal   Pulled     28s (x5 over 114s)  kubelet            Container image "ghcr.io/flannel-io/flannel:v0.26.4" already present on machine
+  Normal   Created    28s (x5 over 114s)  kubelet            Created container: kube-flannel
+  Normal   Started    28s (x5 over 114s)  kubelet            Started container kube-flannel
+  Warning  BackOff    2s (x10 over 110s)  kubelet            Back-off restarting failed container kube-flannel in pod kube-flannel-ds-ts6n8_kube-flannel(1e03c200-2062-4838
+```
+
+此时应该去检查准备工作中 "开启模块" 一节的内容是不是有疏漏。
+
+补救之后，就能看到 kube-flannel-ds 这个 pod 正常运行了：
+
+```bash
+k get pods -A
+NAMESPACE      NAME                               READY   STATUS    RESTARTS        AGE
+kube-flannel   kube-flannel-ds-ts6n8              1/1     Running   7 (9m27s ago)   15m
 ```
 
 ### 安装 Calico
 
 https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico
 
-查看最新版本，当前最新版本是 v3.28:
+查看最新版本，当前最新版本是 v3.29.2:
 
 ```bash
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/tigera-operator.yaml
 ```
+
+TODO：用了 flannel， Calico 后面再验证。 

@@ -7,14 +7,13 @@ description: >
   安装 kubernetes 的 dashboard
 ---
 
-
 ## 安装 dashboard
 
-在下面地址上查看当前dashboard的版本：
+在下面地址上查看当前 dashboard 的版本：
 
 https://github.com/kubernetes/dashboard/releases
 
-根据对kubernetes版本的兼容情况选择对应的dashboard的版本：
+根据对 kubernetes 版本的兼容情况选择对应的 dashboard 的版本：
 
 - kubernetes-dashboard-7.11.0  ，兼容 k8s 1.32
 
@@ -28,10 +27,10 @@ helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dash
 输出为：
 
 ```bash
-"kubernetes-dashboard" has been added to your repositories
+"kubernetes-dashboard" already exists with the same configuration, skipping
 Release "kubernetes-dashboard" does not exist. Installing it now.
 NAME: kubernetes-dashboard
-LAST DEPLOYED: Tue Mar  4 17:28:19 2025
+LAST DEPLOYED: Wed Mar  5 00:53:17 2025
 NAMESPACE: kubernetes-dashboard
 STATUS: deployed
 REVISION: 1
@@ -52,26 +51,41 @@ NOTE: In case port-forward command does not work, make sure that kong service na
 
 Dashboard will be available at:
   https://localhost:8443
-
-```
 ```
 
 此时 dashboard 的 service 和 pod 情况：
 
 ```bash
-kubectl -n kubernetes-dashboard get services 
-NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
-kubernetes-dashboard-api               ClusterIP   10.107.22.93     <none>        8000/TCP                        17m
-kubernetes-dashboard-auth              ClusterIP   10.102.201.198   <none>        8000/TCP                        17m
-kubernetes-dashboard-kong-manager      NodePort    10.103.64.84     <none>        8002:30161/TCP,8445:31811/TCP   17m
-kubernetes-dashboard-kong-proxy        ClusterIP   10.97.134.204    <none>        443/TCP                         17m
-kubernetes-dashboard-metrics-scraper   ClusterIP   10.98.177.211    <none>        8000/TCP                        17m
-kubernetes-dashboard-web               ClusterIP   10.109.72.203    <none>        8000/TCP                        17m
+kubectl -n kubernetes-dashboard get services
 ```
 
-可以访问 http://ip:31811 来访问 dashboard 中的 kong manager。
+输出为：
 
-以前的版本是要访问 kubernetes-dashboard service，现在新版本修改为要访问 kubernetes-dashboard-kong-proxy。
+```bash
+NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+kubernetes-dashboard-api               ClusterIP   10.108.225.190   <none>        8000/TCP   2m5s
+kubernetes-dashboard-auth              ClusterIP   10.99.205.102    <none>        8000/TCP   2m5s
+kubernetes-dashboard-kong-proxy        ClusterIP   10.96.247.162    <none>        443/TCP    2m5s
+kubernetes-dashboard-metrics-scraper   ClusterIP   10.103.222.22    <none>        8000/TCP   2m5s
+kubernetes-dashboard-web               ClusterIP   10.108.219.9     <none>        8000/TCP   2m5s
+```
+
+查看 pod 的情况：
+
+```bash
+kubectl -n kubernetes-dashboard get pods
+```
+
+等待两三分钟之后，pod 启动完成，输出为：    
+
+```bash
+NAME                                                    READY   STATUS    RESTARTS   AGE
+kubernetes-dashboard-api-7d8567b8f-9ksk2                1/1     Running   0          3m8s
+kubernetes-dashboard-auth-6877bf44b9-9qfmg              1/1     Running   0          3m8s
+kubernetes-dashboard-kong-79867c9c48-rzlhp              1/1     Running   0          3m8s
+kubernetes-dashboard-metrics-scraper-794c587449-6phjv   1/1     Running   0          3m8s
+kubernetes-dashboard-web-75576c76b-sm2wj                1/1     Running   0          3m8s
+```
 
 为了方便，使用 node port 来访问 dashboard，需要执行
 
@@ -88,15 +102,15 @@ kubectl -n kubernetes-dashboard get service kubernetes-dashboard-kong-proxy
 输出为：
 
 ```bash
-$ kubectl -n kubernetes-dashboard get service kubernetes-dashboard-kong-proxy 
-
 NAME                              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
-kubernetes-dashboard-kong-proxy   NodePort   10.97.134.204   <none>        443:30730/TCP   24m
+kubernetes-dashboard-kong-proxy   NodePort   10.96.247.162   <none>        443:32616/TCP   17m
 ```
 
-直接就可以用浏览器直接访问：
+现在可以用浏览器直接访问：
 
-https://192.168.0.101:30730/
+https://192.168.3.215:32616/
+
+![](images/dashboard.png)
 
 ### 创建用户并登录 dashboard
 
@@ -105,7 +119,7 @@ https://192.168.0.101:30730/
 创建 admin-user 用户：
 
 ```bash
-vi admin-user-ServiceAccount.yaml
+vi dashboard-adminuser.yaml
 ```
 
 内容为:
@@ -121,13 +135,13 @@ metadata:
 执行：
 
 ```bash
-k create -f admin-user-ServiceAccount.yaml
+k create -f dashboard-adminuser.yaml
 ```
 
 然后绑定角色：
 
 ``` bash
-vi admin-user-ClusterRoleBinding.yaml
+vi dashboard-adminuser-binding.yaml
 ```
 
 内容为:
@@ -150,7 +164,7 @@ subjects:
 执行：
 
 ```bash
-k create -f admin-user-ClusterRoleBinding.yaml
+k create -f dashboard-adminuser-binding.yaml
 ```
 
 然后创建 token ：
@@ -162,8 +176,7 @@ kubectl -n kubernetes-dashboard create token admin-user
 输出为:
 
 ```bash
-$ kubectl -n kubernetes-dashboard create token admin-user
-eyJhbGciOiJSUzI1NiIsImtpZCI6IjdGczc3STI1VVA1OFpKdF9zektMVVFtZjd1NXRDRU8xTTZpZ1VYbDdKWFEifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzE5MDM2NDM0LCJpYXQiOjE3MTkwMzI4MzQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiNGY4YmQ3YjAtZjM2OS00MjgzLWJlNmItMThjNjUyMzE0YjQ0In19LCJuYmYiOjE3MTkwMzI4MzQsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.GOYLXoCCeaZPQ-kuJgx0d4KzRnLkHDHJArAjOwRqg49WIhAl3Hb8O2oD6at2jFgItO-xihFm3D3Ru2jXnPnMhvir0BJ5LBnumH0xDakZ4PrwvCAQADv8KR1ZuzMHlN5yktJ14eSo_UN1rZarq5P1DnbAIHRmgtIlRL2Hfl_Bamkuoxpwr06v50nJHskW7K3A2LjUlgv5rdS7FckIPaD5apmag7NyUi7FP1XEItUX20tF7jy5E5Gv9mI_HDGMTVMxawY4IAvipRcKVQ3tAypVOOMhrqGsfBprtWUkwmyWW8p0jHcAmqq-WX-x-vN70qI4Y2RipKGd4d6z39zPEPCsow
+eyJhbGciOiJSUzI1NiIsImtpZCI6Ik9sWnJsTk5UNE9JVlVmRFMxMUpwNC1tUlVndTl5Zi1WQWtmMjIzd2hDNmcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzQxMTEyNDg4LCJpYXQiOjE3NDExMDg4ODgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiNDU5ZGQxNjctNWI5OS00MWIzLTgzZWEtNGIxMGY3MTc5ZjEyIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiZjMxN2VhZTItNTNiNi00MGZhLWI3MWYtMzZiNDI1YmY4YWQ0In19LCJuYmYiOjE3NDExMDg4ODgsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.TYzOdrMFXcSEeVMbc1ewIA13JVi4FUYoRN7rSH5OstbVfKIF48X_o1RWxOGM_AurhgLxuKZHzmns3K_pX_OR3u1URfK6-gGos4iAQY-H1yntfRmzzsip_FbZh95EYFGTN43gw21jTyfem3OKBXXLgzsnVT_29uMnJzSnCDnrAciVKMoCEUP6x2RSHQhp6PrxrIrx_NMB3vojEZYq3AysQoNqYYjRDd4MnDRClm03dNvW5lvKSgNCVmZFje_EEa2EhI2X6d3X8zx6tHwT5M4-T3hMmyIpzHUwf3ixeZR85rhorMbskNVvRpH6VLH6BXP31c3NMeSgYk3BG8d7UjCYxQ
 ```
 
 这个 token 就可以用在 kubernetes-dashboard 的登录页面上了。
@@ -171,7 +184,7 @@ eyJhbGciOiJSUzI1NiIsImtpZCI6IjdGczc3STI1VVA1OFpKdF9zektMVVFtZjd1NXRDRU8xTTZpZ1VY
 为了方便，将这个 token 存储在 Secret ：
 
 ``` bash
-vi admin-user-Secret.yaml
+vi dashboard-adminuser-secret.yaml
 ```
 
 内容为:
@@ -190,11 +203,11 @@ type: kubernetes.io/service-account-token
 执行：
 
 ```bash
-k create -f admin-user-Secret.yaml
+k create -f dashboard-adminuser-secret.yaml
 ```
 
 之后就可以用命令随时获取这个 token 了：
 
 ```bash
-kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath={".data.token"} | base64 -d
+kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d
 ```
