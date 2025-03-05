@@ -9,6 +9,8 @@ description: >
 
 ## 安装 dashboard
 
+参考：https://github.com/kubernetes/dashboard/#installation
+
 在下面地址上查看当前 dashboard 的版本：
 
 https://github.com/kubernetes/dashboard/releases
@@ -87,7 +89,7 @@ kubernetes-dashboard-metrics-scraper-794c587449-6phjv   1/1     Running   0     
 kubernetes-dashboard-web-75576c76b-sm2wj                1/1     Running   0          3m8s
 ```
 
-为了方便，使用 node port 来访问 dashboard，需要执行
+为了方便，使用 node port 来访问 dashboard，需要执行：
 
 ```bash
 kubectl -n kubernetes-dashboard edit service kubernetes-dashboard-kong-proxy

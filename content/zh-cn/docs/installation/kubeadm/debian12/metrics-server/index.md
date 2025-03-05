@@ -7,13 +7,14 @@ description: >
   安装 kubernetes 的 metrics server
 ---
 
-
+参考：https://github.com/kubernetes-sigs/metrics-server/#installation
 
 ## 安装 metrics server
 
 下载：
 
 ```bash
+mkdir -p ~/work/soft/k8s
 cd ~/work/soft/k8s
 wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
@@ -45,7 +46,7 @@ k apply -f components.yaml
 稍等片刻看是否启动:
 
 ```bash
-$ kubectl get pod -n kube-system | grep metrics-server
+kubectl get pod -n kube-system | grep metrics-server
 ```
 
 验证一下，查看 service 信息
@@ -61,13 +62,7 @@ kubectl top nodes
 kubectl top pods -n kube-system 
 ```
 
-
-
-
-
 ## 参考资料
-
-
 
 - [Debian 12 安装 Kubernetes(k8s) + docker ，配置主从节点](https://acytoo.com/ladder/debian12-kubernetes-installation-and-config-master-worker/)
 
