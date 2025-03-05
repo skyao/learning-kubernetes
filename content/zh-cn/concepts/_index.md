@@ -2,7 +2,7 @@
 title: "概念"
 linkTitle: "概念"
 weight: 1
-date: 2021-02-22
+date: 2025-03-05
 cascade:
 - type: "docs"
 menu:
@@ -15,5 +15,5 @@ menu:
 kubenetes 中的各种概念
 {{% /pageinfo %}}
 
-概念部分帮助你了解Kubernetes系统的各个部分，以及Kubernetes用来表示你的集群的抽象概念，并帮助你获得对Kubernetes工作方式的更深理解。
+概念部分帮助了解 Kubernetes 系统的各个部分，以及 Kubernetes 用来表示集群的抽象概念，获得对 Kubernetes 工作方式的更深理解。
 

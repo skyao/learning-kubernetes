@@ -1,12 +1,8 @@
 ---
 title: "容器"
 linkTitle: "容器"
-weight: 300
-date: 2021-02-01
+weight: 30
+date: 2025-03-05
 description: >
-  Kubernetes 容器
+  打包应用及其运行依赖环境的技术
 ---
-
-> https://kubernetes.io/zh-cn/docs/concepts/containers/
-
-TBD: 稍后细看

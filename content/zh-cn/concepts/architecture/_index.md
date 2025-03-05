@@ -1,12 +1,9 @@
 ---
 title: "Kubernetes 架构"
 linkTitle: "架构"
-weight: 200
-date: 2021-02-01
+weight: 20
+date: 2025-03-05
 description: >
-  Kubernetes 架构
+  Kubernetes 背后的架构概念
 ---
 
-> https://kubernetes.io/zh-cn/docs/concepts/architecture/
-
-TBD: 稍后细看
