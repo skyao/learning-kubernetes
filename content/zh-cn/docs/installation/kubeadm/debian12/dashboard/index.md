@@ -121,6 +121,9 @@ https://192.168.3.215:32616/
 创建 admin-user 用户：
 
 ```bash
+mkdir -p ~/work/soft/k8s
+cd ~/work/soft/k8s
+
 vi dashboard-adminuser.yaml
 ```
 
@@ -213,3 +216,7 @@ k create -f dashboard-adminuser-secret.yaml
 ```bash
 kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d
 ```
+
+备注：复制 token 的时候，不要复制最后的那个 % 字符，否则会报错。
+
+![](images/token.png)

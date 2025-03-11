@@ -93,3 +93,62 @@ kubeadm / kubelet / kubectl 的版本没有必要升级到最新，因此可以�
 sudo vi /etc/apt/sources.list.d/kubernetes.list
 ```
 
+注释掉里面的内容。
+
+> 备注：前面执行 apt-mark hold 后已经不会再更新了，但依然会拖慢 apt update 的速度，因此还是需要手动注释。
+
+## 常见问题
+
+### prod-cdn.packages.k8s.io 无法访问
+
+偶然会遇到 prod-cdn.packages.k8s.io 无法访问的问题，此时的报错如下：
+
+```bash
+sudo apt-get update
+Hit:1 http://mirrors.ustc.edu.cn/debian bookworm InRelease
+Hit:2 http://mirrors.ustc.edu.cn/debian bookworm-updates InRelease
+Hit:3 http://security.debian.org/debian-security bookworm-security InRelease
+Ign:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.32/deb  InRelease
+Ign:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.32/deb  InRelease
+Ign:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.32/deb  InRelease
+Err:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.32/deb  InRelease
+  Could not connect to prod-cdn.packages.k8s.io:443 (221.228.32.13), connection timed out
+Reading package lists... Done
+W: Failed to fetch https://pkgs.k8s.io/core:/stable:/v1.32/deb/InRelease  Could not connect to prod-cdn.packages.k8s.io:443 (221.228.32.13), connection timed out
+W: Some index files failed to download. They have been ignored, or old ones used instead.
+```
+
+首先排除是网络问题，因为实际配好网络代理，也依然无法访问。
+
+后来发现，在不同地区的机器上 ping prod-cdn.packages.k8s.io 的 ip 地址是不一样的，
+
+```bash
+$ ping prod-cdn.packages.k8s.io
+
+Pinging dkhzw6k7x6ord.cloudfront.net [108.139.10.84] with 32 bytes of data:
+Reply from 108.139.10.84: bytes=32 time=164ms TTL=242
+Reply from 108.139.10.84: bytes=32 time=166ms TTL=242
+......
+
+# 这个地址无法访问
+$ ping prod-cdn.packages.k8s.io
+PING dkhzw6k7x6ord.cloudfront.net (221.228.32.13) 56(84) bytes of data.
+64 bytes from 221.228.32.13 (221.228.32.13): icmp_seq=1 ttl=57 time=9.90 ms
+64 bytes from 221.228.32.13 (221.228.32.13): icmp_seq=2 ttl=57 time=11.4 ms
+......
+```
+
+因此考虑通过修改 /etc/hosts 文件来避开 dns 解析的问题：
+
+```bash
+sudo vi /etc/hosts
+```
+
+添加如下内容：
+
+```bash
+108.139.10.84 prod-cdn.packages.k8s.io
+```
+
+这样在出现问题的这台机器上，强制将 prod-cdn.packages.k8s.io 解析到 108.139.10.84 这个 ip 地址，这样就可以访问了。
+
