@@ -21,33 +21,34 @@ https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-ku
 
 因为前面用的 Docker Engine 和 cri-dockerd ，因此这里的 cri-socket 需要指定为 "unix:///var/run/cri-dockerd.sock"。
 
-apiserver-advertise-address 需要指定为当前节点的 IP 地址，因为当前节点是单节点，因此这里指定为 192.168.3.215。
+apiserver-advertise-address 需要指定为当前节点的 IP 地址，因为当前节点是单节点，因此这里指定为 192.168.3.179。
 
 ```bash
-sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock --apiserver-advertise-address=192.168.3.215
+sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock --apiserver-advertise-address=192.168.3.179 --image-repository=192.168.3.91:5000/k8s-proxy
 ```
 
 输出为：
 
 ```bash
-[init] Using Kubernetes version: v1.32.2
+W0511 22:22:37.653053    1276 version.go:109] could not fetch a Kubernetes version from the internet: unable to get URL "https://dl.k8s.io/release/stable-1.txt": Get "https://dl.k8s.io/release/stable-1.txt": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+W0511 22:22:37.653104    1276 version.go:110] falling back to the local client version: v1.33.0
+[init] Using Kubernetes version: v1.33.0
 [preflight] Running pre-flight checks
 [preflight] Pulling images required for setting up a Kubernetes cluster
 [preflight] This might take a minute or two, depending on the speed of your internet connection
 [preflight] You can also perform this action beforehand using 'kubeadm config images pull'
-W0304 20:23:50.183712    5058 checks.go:846] detected that the sandbox image "registry.k8s.io/pause:3.9" of the container runtime is inconsistent with that used by kubeadm.It is recommended to use "registry.k8s.io/pause:3.10" as the CRI sandbox image.
 [certs] Using certificateDir folder "/etc/kubernetes/pki"
 [certs] Generating "ca" certificate and key
 [certs] Generating "apiserver" certificate and key
-[certs] apiserver serving cert is signed for DNS names [debian12 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.3.215]
+[certs] apiserver serving cert is signed for DNS names [debian12 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.3.179]
 [certs] Generating "apiserver-kubelet-client" certificate and key
 [certs] Generating "front-proxy-ca" certificate and key
 [certs] Generating "front-proxy-client" certificate and key
 [certs] Generating "etcd/ca" certificate and key
 [certs] Generating "etcd/server" certificate and key
-[certs] etcd/server serving cert is signed for DNS names [debian12 localhost] and IPs [192.168.3.215 127.0.0.1 ::1]
+[certs] etcd/server serving cert is signed for DNS names [debian12 localhost] and IPs [192.168.3.179 127.0.0.1 ::1]
 [certs] Generating "etcd/peer" certificate and key
-[certs] etcd/peer serving cert is signed for DNS names [debian12 localhost] and IPs [192.168.3.215 127.0.0.1 ::1]
+[certs] etcd/peer serving cert is signed for DNS names [debian12 localhost] and IPs [192.168.3.179 127.0.0.1 ::1]
 [certs] Generating "etcd/healthcheck-client" certificate and key
 [certs] Generating "apiserver-etcd-client" certificate and key
 [certs] Generating "sa" key and public key
@@ -67,15 +68,20 @@ W0304 20:23:50.183712    5058 checks.go:846] detected that the sandbox image "re
 [kubelet-start] Starting the kubelet
 [wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests"
 [kubelet-check] Waiting for a healthy kubelet at http://127.0.0.1:10248/healthz. This can take up to 4m0s
-[kubelet-check] The kubelet is healthy after 500.939992ms
-[api-check] Waiting for a healthy API server. This can take up to 4m0s
-[api-check] The API server is healthy after 3.00043501s
+[kubelet-check] The kubelet is healthy after 501.341993ms
+[control-plane-check] Waiting for healthy control plane components. This can take up to 4m0s
+[control-plane-check] Checking kube-apiserver at https://192.168.3.179:6443/livez
+[control-plane-check] Checking kube-controller-manager at https://127.0.0.1:10257/healthz
+[control-plane-check] Checking kube-scheduler at https://127.0.0.1:10259/livez
+[control-plane-check] kube-controller-manager is healthy after 1.002560331s
+[control-plane-check] kube-scheduler is healthy after 1.156287353s
+[control-plane-check] kube-apiserver is healthy after 2.500905726s
 [upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
 [kubelet] Creating a ConfigMap "kubelet-config" in namespace kube-system with the configuration for the kubelets in the cluster
 [upload-certs] Skipping phase. Please see --upload-certs
 [mark-control-plane] Marking the node debian12 as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
 [mark-control-plane] Marking the node debian12 as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
-[bootstrap-token] Using token: 8e5a3n.rqbqfbnvhf4uyjft
+[bootstrap-token] Using token: 5dlwbv.j26vzkb6uvf9yqv6
 [bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
 [bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
 [bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
@@ -104,8 +110,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.3.215:6443 --token 8e5a3n.rqbqfbnvhf4uyjft \
-        --discovery-token-ca-cert-hash sha256:183b3e9965d298e67689baddeff2ff88c32b3f18aa9dd9a15be1881d26025a22
+kubeadm join 192.168.3.179:6443 --token 5dlwbv.j26vzkb6uvf9yqv6 \
+	--discovery-token-ca-cert-hash sha256:0d1be37706d728f6c09dbcff86614c6fe04c536d969371400f4d3551f197c6e4
 ```
 
 根据提示操作：

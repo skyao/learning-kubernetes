@@ -16,10 +16,10 @@ sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 ```
 
-假定要安装的 kubernetes 版本为 1.32: 
+假定要安装的 kubernetes 版本为 1.33: 
 
 ```bash
-export K8S_VERSION=1.32
+export K8S_VERSION=1.33
 
 # sudo mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -49,10 +49,10 @@ kubectl version --client && echo && kubeadm version
 输出为：
 
 ```bash
-Client Version: v1.32.2
-Kustomize Version: v5.5.0
+Client Version: v1.33.0
+Kustomize Version: v5.6.0
 
-kubeadm version: &version.Info{Major:"1", Minor:"32", GitVersion:"v1.32.2", GitCommit:"67a30c0adcf52bd3f56ff0893ce19966be12991f", GitTreeState:"clean", BuildDate:"2025-02-12T21:24:52Z", GoVersion:"go1.23.6", Compiler:"gc", Platform:"linux/amd64"}
+kubeadm version: &version.Info{Major:"1", Minor:"33", EmulationMajor:"", EmulationMinor:"", MinCompatibilityMajor:"", MinCompatibilityMinor:"", GitVersion:"v1.33.0", GitCommit:"60a317eadfcb839692a68eab88b2096f4d708f4f", GitTreeState:"clean", BuildDate:"2025-04-23T13:05:48Z", GoVersion:"go1.24.2", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
 在运行 kubeadm 之前，先启动 kubelet 服务：
