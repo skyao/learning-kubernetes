@@ -183,9 +183,10 @@ vi install_k8s_offline.zsh
 #!/usr/bin/env zsh
 
 # ------------------------------------------------------------
-# Docker & Docker Compose 离线安装脚本 (Debian 12)
+# kubeadm 离线安装脚本 (Debian 12)
 # 前提条件：
-# 1. 所有 .deb 文件和 docker-compose 二进制文件已放在 ~/docker-offline
+# 1. 所有 .deb 文件已放在 ~/k8s-offline
+# 2. 已经
 # ------------------------------------------------------------
 
 set -e  # 遇到错误立即退出
@@ -213,13 +214,43 @@ fi
 echo "🔧 开始离线安装 kubeadm..."
 
 # ------------------------------------------------------------
-# 1. 安装 kubeadm 的依赖
+# 1. 开启模块
+# ------------------------------------------------------------
+echo "🔧 开启模块..."
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+
+# ------------------------------------------------------------
+# 2. 安装 cri-dockerd
+# ------------------------------------------------------------
+echo "📦 安装 cri-dockerd..."
+
+cd "$K8S_OFFLINE_DIR"
+sudo dpkg -i cri-tools*.deb
+sudo dpkg -i cri-dockerd*.deb
+
+# ------------------------------------------------------------
+# 3. 安装 kubeadm 的依赖
 # ------------------------------------------------------------
 echo "📦 安装 kubeadm 的依赖包..."
-cd "$K8S_OFFLINE_DIR"
 
 # 按顺序安装依赖（防止 dpkg 报错）
-for pkg in util-linux conntrack cri-tools libc6 ethtool mount iproute2 iptables kubernetes-cni; do
+for pkg in util-linux conntrack libc6 ethtool mount iproute2 iptables helm kubernetes-cni; do
     if ls "${pkg}"*.deb &>/dev/null; then
         echo "➡️ 正在安装: ${pkg}"
         sudo dpkg -i "${pkg}"*.deb || true  # 忽略部分错误，后续用 apt-get -f 修复
@@ -231,7 +262,7 @@ echo "🛠️ 修复依赖关系..."
 sudo apt-get -f install -y
 
 # ------------------------------------------------------------
-# 2. 安装 kubeadm
+# 4. 安装 kubeadm
 # ------------------------------------------------------------
 # 按顺序安装 kubeadm 组件（防止 dpkg 报错）
 echo "📦 安装 kubeadm 组件..."
@@ -248,7 +279,7 @@ sudo apt-get -f install -y
 
 
 # ------------------------------------------------------------
-# 3. 配置 kubectl
+# 5. 配置 kubectl
 # ------------------------------------------------------------
 echo "⚙️ 配置 kubectl 使用 alias..."
 
@@ -262,7 +293,7 @@ EOF
 fi
 
 # ------------------------------------------------------------
-# 4. 验证安装
+# 6. 验证安装
 # ------------------------------------------------------------
 echo "✅ 安装完成！验证版本："
 kubectl version --client && echo && kubelet --version && echo && kubeadm version && echo
@@ -270,6 +301,7 @@ kubectl version --client && echo && kubelet --version && echo && kubeadm version
 echo "✨ kubeadm 安装完成！"
 echo "👥 然后重新登录，或者执行命令以便 k alias 立即生效： source ~/.zshrc"
 echo "🟢 之后请运行测试 kubectl 的别名 k： k version --client"
+
 ```
 
 

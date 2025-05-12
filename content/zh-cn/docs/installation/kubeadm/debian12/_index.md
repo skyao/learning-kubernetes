@@ -7,6 +7,12 @@ description: >
   在 debian12 上用 kubeadm 安装 kubenetes
 ---
 
-参考官方文档：
+有三种安装方式：
 
-https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+1. 在线安装： 最标准的安装方法，最大的问题就是需要联网+科学上网，速度慢，中途有被墙/被dns污染的风险
+
+2. 预热安装： 在在线安装的基础上，提前准备好安装文件和镜像文件，速度快，而且不需要用到镜像仓库。需要充分的提前准备，最好结合 pve 模板一起使用
+
+3. 离线安装： 需要提前下载好所有需要的文件到本地或者本地镜像仓库，速度快，但是同样需要充分的提前准备，而且需要用到 harbor 之类的镜像仓库
+
+
