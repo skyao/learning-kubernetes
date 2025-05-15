@@ -1,7 +1,7 @@
 ---
-title: "概述"
-linkTitle: "概述"
-weight: 10
+title: "types.go"
+linkTitle: "types.go"
+weight: 20
 date: 2025-05-14
 description: >
   Admission API 类型
@@ -108,3 +108,49 @@ type AdmissionRequest struct {
 
 ### AdmissionResponse
 
+```go
+// AdmissionResponse 描述了一个准入响应
+type AdmissionResponse struct {
+	// UID 是单个请求/响应的标识符
+	// 必须从对应的 AdmissionRequest 中复制过来
+	UID types.UID `json:"uid" protobuf:"bytes,1,opt,name=uid"`
+
+	// Allowed 表示是否允许该准入请求
+	Allowed bool `json:"allowed" protobuf:"varint,2,opt,name=allowed"`
+
+	// Result 包含关于为什么拒绝准入请求的额外细节
+	// 如果 "Allowed" 为 "true"，则不会参考此字段
+	// +optional
+	Result *metav1.Status `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+
+	// patch 内容体。目前我们只支持实现了 RFC 6902 的 "JSONPatch"
+	// +optional
+	Patch []byte `json:"patch,omitempty" protobuf:"bytes,4,opt,name=patch"`
+
+	// patch 类型。目前我们只允许 "JSONPatch"
+	// +optional
+	PatchType *PatchType `json:"patchType,omitempty" protobuf:"bytes,5,opt,name=patchType"`
+
+	// AuditAnnotations 是由远程准入控制器设置的非结构化键值映射（例如 error=image-blacklisted）
+	// MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook 准入控制器会在键前加上
+	// 准入 webhook 名称（例如 imagepolicy.example.com/error=image-blacklisted）
+	// 准入 webhook 提供 AuditAnnotations 来为此请求的审计日志添加上下文
+	// +optional
+	AuditAnnotations map[string]string `json:"auditAnnotations,omitempty" protobuf:"bytes,6,opt,name=auditAnnotations"`
+
+	// warnings 是要返回给请求 API 客户端的警告消息列表
+	// 警告消息描述了 API 请求客户端应该纠正或注意的问题
+	// 尽可能将警告限制在 120 个字符以内
+	// 超过 256 个字符的警告和大量警告可能会被截断
+	// +optional
+	Warnings []string `json:"warnings,omitempty" protobuf:"bytes,7,rep,name=warnings"`
+}
+
+// PatchType is the type of patch being used to represent the mutated object
+type PatchType string
+
+// PatchType constants.
+const (
+	PatchTypeJSONPatch PatchType = "JSONPatch"
+)
+```
