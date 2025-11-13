@@ -17,7 +17,7 @@ description: >
 
 ## 准备工作
 
-- 安装 docker： 参考 https://skyao.io/learning-docker/docs/installation/debian12/ ，在线安装和离线安装都可以。
+- 安装 docker： 参考 https://skyao.net/learning-docker/docs/installation/debian12/ ，在线安装和离线安装都可以。
 
 - 安装 kubeadm： 参考前面的在线安装方式，或者直接用后面的离线安装方式，将 cri-dockerd / helm 和kubeadm / kubelete / kubectl 安装好。
 

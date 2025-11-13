@@ -8,7 +8,7 @@ Kubernetes是谷歌开源的容器集群管理系统,是Google多年大规模容
 
 这是个人学习Kubernetes的笔记，请点击下面的链接阅读:
 
-- [在线阅读](https://skyao.io/learning-kubernetes/)：hugo格式 + docsy主题，界面清爽。托管于国内节点，有备案，国内访问速度很快
+- [在线阅读](https://skyao.net/learning-kubernetes/)：hugo格式 + docsy主题，界面清爽。托管于国内节点，有备案，国内访问速度很快
 - [@github](https://github.com/skyao/learning-kubernetes/)：源码托管于github，如有谬误或需讨论，请提issue
 
 ### 版权申明

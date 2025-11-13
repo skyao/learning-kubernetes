@@ -61,7 +61,7 @@ https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 
 docker 的安装参考：
 
-https://skyao.io/learning-docker/docs/installation/debian12/
+https://skyao.net/learning-docker/docs/installation/debian12/
 
 cri-dockerd 的安装参考：
 
