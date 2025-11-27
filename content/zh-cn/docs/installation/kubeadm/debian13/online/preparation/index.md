@@ -61,7 +61,7 @@ https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 
 docker 的安装参考：
 
-https://skyao.net/learning-docker/docs/installation/debian12/
+https://skyao.net/learning-docker/docs/installation/debian13/
 
 cri-dockerd 的安装参考：
 
@@ -71,7 +71,7 @@ https://mirantis.github.io/cri-dockerd/usage/install/
 
 https://github.com/Mirantis/cri-dockerd/releases
 
-debian 12 选择下载文件
+debian 13 选择下载文件
 
 https://github.com/Mirantis/cri-dockerd/releases/download/v0.4.0/cri-dockerd_0.4.0.3-0.debian-bookworm_amd64.deb
 
@@ -156,8 +156,38 @@ sudo vi /etc/apt/sources.list.d/helm-stable-debian.list
 
 ```bash
 $ helm version
-version.BuildInfo{Version:"v3.17.3", GitCommit:"e4da49785aa6e6ee2b86efd5dd9e43400318262b", GitTreeState:"clean", GoVersion:"go1.23.7"}
+version.BuildInfo{Version:"v3.19.2", GitCommit:"8766e718a0119851f10ddbe4577593a45fadf544", GitTreeState:"clean", GoVersion:"go1.24.9"}
 ```
 
+有时会遇到网络问题无法访问:
+
+```bash
+sudo apt-get update
+Hit:1 http://mirrors.ustc.edu.cn/debian trixie InRelease
+Hit:2 http://mirrors.ustc.edu.cn/debian trixie-updates InRelease               
+Ign:3 https://baltocdn.com/helm/stable/debian all InRelease                    
+Hit:4 http://security.debian.org/debian-security trixie-security InRelease
+Ign:3 https://baltocdn.com/helm/stable/debian all InRelease
+Ign:3 https://baltocdn.com/helm/stable/debian all InRelease
+Err:3 https://baltocdn.com/helm/stable/debian all InRelease
+  SSL connection failed: error:0A000126:SSL routines::unexpected eof while reading / Success [IP: 198.18.1.113 443]
+Reading package lists... Done
+W: Failed to fetch https://baltocdn.com/helm/stable/debian/dists/all/InRelease  SSL connection failed: error:0A000126:SSL routines::unexpected eof while reading / Success [IP: 198.18.1.113 443]
+W: Some index files failed to download. They have been ignored, or old ones used instead.
+```
+
+可以选择用官方脚本安装 Helm（以便绕过上面那个无法访问的 apt 仓库）:
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+或者国内镜像源,比如清华大学镜像站提供的 Helm 源:
 
 
+```bash
+echo "deb https://mirrors.tuna.tsinghua.edu.cn/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm.list
+curl https://mirrors.tuna.tsinghua.edu.cn/helm/stable/debian/helm.gpg | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install helm
+```

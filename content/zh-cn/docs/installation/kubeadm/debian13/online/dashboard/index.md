@@ -9,7 +9,9 @@ description: >
 
 ## 安装 dashboard
 
-参考：https://github.com/kubernetes/dashboard/#installation
+参考：
+
+https://github.com/kubernetes/dashboard/#installation
 
 在下面地址上查看当前 dashboard 的版本：
 
@@ -17,7 +19,7 @@ https://github.com/kubernetes/dashboard/releases
 
 根据对 kubernetes 版本的兼容情况选择对应的 dashboard 的版本：
 
-- kubernetes-dashboard-7.11.0  ，兼容 k8s 1.32
+- kubernetes-dashboard-7.14.0  ，没看到兼容说明, 但应该支持最新的 k8s 1.34 吧
 
 最新版本需要用 helm 进行安装：
 
@@ -29,10 +31,10 @@ helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dash
 输出为：
 
 ```bash
-"kubernetes-dashboard" already exists with the same configuration, skipping
+"kubernetes-dashboard" has been added to your repositories
 Release "kubernetes-dashboard" does not exist. Installing it now.
 NAME: kubernetes-dashboard
-LAST DEPLOYED: Wed Mar  5 00:53:17 2025
+LAST DEPLOYED: Thu Nov 27 14:09:11 2025
 NAMESPACE: kubernetes-dashboard
 STATUS: deployed
 REVISION: 1
@@ -65,11 +67,11 @@ kubectl -n kubernetes-dashboard get services
 
 ```bash
 NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-kubernetes-dashboard-api               ClusterIP   10.108.225.190   <none>        8000/TCP   2m5s
-kubernetes-dashboard-auth              ClusterIP   10.99.205.102    <none>        8000/TCP   2m5s
-kubernetes-dashboard-kong-proxy        ClusterIP   10.96.247.162    <none>        443/TCP    2m5s
-kubernetes-dashboard-metrics-scraper   ClusterIP   10.103.222.22    <none>        8000/TCP   2m5s
-kubernetes-dashboard-web               ClusterIP   10.108.219.9     <none>        8000/TCP   2m5s
+kubernetes-dashboard-api               ClusterIP   10.102.87.32     <none>        8000/TCP   108s
+kubernetes-dashboard-auth              ClusterIP   10.108.108.108   <none>        8000/TCP   108s
+kubernetes-dashboard-kong-proxy        ClusterIP   10.111.46.43     <none>        443/TCP    108s
+kubernetes-dashboard-metrics-scraper   ClusterIP   10.98.190.255    <none>        8000/TCP   107s
+kubernetes-dashboard-web               ClusterIP   10.103.159.121   <none>        8000/TCP   108s
 ```
 
 查看 pod 的情况：
@@ -80,13 +82,13 @@ kubectl -n kubernetes-dashboard get pods
 
 等待两三分钟之后，pod 启动完成，输出为：    
 
-```bash
+```bash                                     
 NAME                                                    READY   STATUS    RESTARTS   AGE
-kubernetes-dashboard-api-7d8567b8f-9ksk2                1/1     Running   0          3m8s
-kubernetes-dashboard-auth-6877bf44b9-9qfmg              1/1     Running   0          3m8s
-kubernetes-dashboard-kong-79867c9c48-rzlhp              1/1     Running   0          3m8s
-kubernetes-dashboard-metrics-scraper-794c587449-6phjv   1/1     Running   0          3m8s
-kubernetes-dashboard-web-75576c76b-sm2wj                1/1     Running   0          3m8s
+kubernetes-dashboard-api-7994c5cb69-bhdnj               1/1     Running   0          16s
+kubernetes-dashboard-auth-764494db59-fqt88              1/1     Running   0          16s
+kubernetes-dashboard-kong-9849c64bd-jvwv2               1/1     Running   0          16s
+kubernetes-dashboard-metrics-scraper-7685fd8b77-gcq8c   1/1     Running   0          16s
+kubernetes-dashboard-web-5c9f966b98-nbjxv               1/1     Running   0          16s
 ```
 
 为了方便，使用 node port 来访问 dashboard，需要执行：
@@ -105,12 +107,12 @@ kubectl -n kubernetes-dashboard get service kubernetes-dashboard-kong-proxy
 
 ```bash
 NAME                              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
-kubernetes-dashboard-kong-proxy   NodePort   10.96.247.162   <none>        443:32616/TCP   17m
+kubernetes-dashboard-kong-proxy   NodePort   10.107.131.211   <none>        443:30652/TCP   95s
 ```
 
 现在可以用浏览器直接访问：
 
-https://192.168.3.215:32616/
+https://192.168.3.100:30652/
 
 ![](images/dashboard.png)
 

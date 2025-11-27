@@ -2,9 +2,9 @@
 title: "安装命令行"
 linkTitle: "安装"
 weight: 20
-date: 2025-03-04
+date: 2025-11-24
 description: >
-  在 debian12 上安装 kubeadm / kubelet / kubectl
+  在 debian13 上安装 kubeadm / kubelet / kubectl
 ---
 
 参考： https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
@@ -16,10 +16,10 @@ sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 ```
 
-假定要安装的 kubernetes 版本为 1.33: 
+假定要安装的 kubernetes 版本为 1.34: 
 
 ```bash
-export K8S_VERSION=1.33
+export K8S_VERSION=1.34
 
 # sudo mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -49,10 +49,10 @@ kubectl version --client && echo && kubeadm version
 输出为：
 
 ```bash
-Client Version: v1.33.0
-Kustomize Version: v5.6.0
+Client Version: v1.34.2
+Kustomize Version: v5.7.1
 
-kubeadm version: &version.Info{Major:"1", Minor:"33", EmulationMajor:"", EmulationMinor:"", MinCompatibilityMajor:"", MinCompatibilityMinor:"", GitVersion:"v1.33.0", GitCommit:"60a317eadfcb839692a68eab88b2096f4d708f4f", GitTreeState:"clean", BuildDate:"2025-04-23T13:05:48Z", GoVersion:"go1.24.2", Compiler:"gc", Platform:"linux/amd64"}
+kubeadm version: &version.Info{Major:"1", Minor:"34", EmulationMajor:"", EmulationMinor:"", MinCompatibilityMajor:"", MinCompatibilityMinor:"", GitVersion:"v1.34.2", GitCommit:"8cc511e399b929453cd98ae65b419c3cc227ec79", GitTreeState:"clean", BuildDate:"2025-11-11T19:08:36Z", GoVersion:"go1.24.9", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
 在运行 kubeadm 之前，先启动 kubelet 服务：
