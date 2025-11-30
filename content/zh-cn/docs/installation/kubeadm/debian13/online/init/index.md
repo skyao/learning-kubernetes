@@ -11,79 +11,9 @@ description: >
 
 https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 
-## 初始化集群
+## 需要注意的问题
 
-pod-network-cidr 尽量用 10.244.0.0/16 这个范围，不然有些网络插件会需要额外的配置。
-
-cri-socket 的配置参考：
-
-https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime
-
-因为前面用的 Docker Engine 和 cri-dockerd ，因此这里的 cri-socket 需要指定为 "unix:///var/run/cri-dockerd.sock"。
-
-apiserver-advertise-address 需要指定为当前节点的 IP 地址，因为当前节点是单节点，因此这里指定为当前机器的 IP 地址如 192.168.3.10。
-
-```bash
-sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock --apiserver-advertise-address=192.168.3.100 --image-repository=192.168.3.193:5000/k8s-proxy
-```
-
-### pause 镜像的版本问题
-
-遇到警告: 
-
-```bash
-W1127 11:14:12.643662   17241 checks.go:827] detected that the sandbox image "registry.k8s.io/pause:3.10" of the container runtime is inconsistent with that used by kubeadm. It is recommended to use "192.168.3.193:5000/k8s-proxy/pause:3.10.1" as the CRI sandbox image.
-```
-
-这个警告的意思是：容器运行时（CRI）默认使用的 sandbox 镜像版本和 kubeadm 期望的不一致。
-
-Kubernetes 在运行 Pod 时，会用一个特殊的“pause”容器作为 Pod 的基础（sandbox）. 目前我安装的 CRI（cri-dockerd 或 containerd）默认拉的是：
-
-```bash
-registry.k8s.io/pause:3.10
-```
-
-而 kubeadm 在 v1.34.2 对应的版本期望的是： 
-
-```bash
-registry.k8s.io/pause:3.10.1
-```
-
-因为版本号不一致，就出现了这个警告。
-
-解决方法, 修改 CRI 默认 sandbox 镜像, 对于 cri-dockerd, 需要在 cri-dockerd 的 systemd 启动参数里指定
-
-```bash
-sudo vi /lib/systemd/system/cri-docker.service
-```
-
-找到这行:
-
-```bash
-ExecStart=/usr/bin/cri-dockerd --container-runtime-endpoint fd://
-```
-
-在后面加入内容:
-
-```bash
- --pod-infra-container-image=192.168.3.193:5000/k8s-proxy/pause:3.10.1
-```
-
-```bash
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl restart cri-docker
-```
-
-验证:
-
-```bash
-ps -ef | grep cri-dockerd
-
-root       19302       1  0 11:40 ?        00:00:00 /usr/bin/cri-dockerd --container-runtime-endpoint fd:// --pod-infra-container-image=192.168.3.193:5000/k8s-proxy/pause:3.10.1
-```
-
-### coredns 的特殊处理
+### coredns 的版本问题
 
 ```bash
 [sudo] password for sky: 
@@ -129,7 +59,25 @@ To see the stack trace of this error execute with --v=5 or higher
 
 要修订这个问题,就需要告知 kubeadm coredns 的代理仓库
 
+## 初始化集群
+
+### 准备 kubeadm.yaml
+
+pod-network-cidr 尽量用 10.244.0.0/16 这个范围，不然有些网络插件会需要额外的配置。
+
+cri-socket 的配置参考：
+
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-runtime
+
+因为前面用的 Docker Engine 和 cri-dockerd ，因此这里的 cri-socket 需要指定为 "unix:///var/run/cri-dockerd.sock"。
+
+apiserver-advertise-address 需要指定为当前节点的 IP 地址，因为当前节点是单节点，因此这里指定为当前机器的 IP 地址如 192.168.3.100。
+
+新建一个 kubeadm.yaml 文件：
+
 ```bash
+mkdir -p ~/work/soft/k8s/
+cd ~/work/soft/k8s/
 vi kubeadm.yaml
 ```
 
@@ -278,13 +226,13 @@ kubectl get node
 
 ```bash
 NAME       STATUS     ROLES           AGE     VERSION
-debian12   NotReady   control-plane   3m49s   v1.32.2
+debian13   NotReady   control-plane   3m49s   v1.32.2
 ```
 
 执行：
 
 ```bash
-kubectl describe node debian12
+kubectl describe node debian13
 ```
 
 能看到节点的错误信息：

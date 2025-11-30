@@ -9,11 +9,11 @@ description: >
 
 ## 原理
 
-所谓预热安装，就是在在线安装的基础上，在执行 `kubeadmin init` 之前，提前准备好所有的安装文件和镜像文件，然后制造成 pve 模板。
+所谓预热安装，就是在在线安装的基础上，在执行 `kubeadmin init` 之前，提前准备好所有的安装文件和镜像文件，然后制作成 pve 模板。
 
 之后就可以重用该模板，在需要时创建虚拟机，在虚拟机中执行 `kubeadmin init` 即可快速安装 kubenetes。
 
-原则上，在执行 `kubeadmin init` 之前的各种准备工作都可以参考在线安装的方式。而在 `kubeadmin init` 之后的安装工作，就只能通过提前准备安装文件，提前下载镜像文件等方式来加速。
+原则上，在执行 `kubeadmin init` 之前的各种准备工作都可以参考在线安装的方式。而在 `kubeadmin init` 之后的安装工作，就只能通过提前准备安装文件和提前下载镜像文件等方式来加速。
 
 ## 准备工作
 
@@ -32,22 +32,26 @@ kubeadm config images pull --cri-socket unix:///var/run/cri-dockerd.sock
 这样就可以提前下载好 kubeadm init 时需要的镜像文件：
 
 ```bash
-[config/images] Pulled registry.k8s.io/kube-apiserver:v1.33.0
-[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.33.0
-[config/images] Pulled registry.k8s.io/kube-scheduler:v1.33.0
-[config/images] Pulled registry.k8s.io/kube-proxy:v1.33.0
-[config/images] Pulled registry.k8s.io/coredns/coredns:v1.12.0
-[config/images] Pulled registry.k8s.io/pause:3.10
-[config/images] Pulled registry.k8s.io/etcd:3.5.21-0
+[config/images] Pulled registry.k8s.io/kube-apiserver:v1.34.2
+[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.34.2
+[config/images] Pulled registry.k8s.io/kube-scheduler:v1.34.2
+[config/images] Pulled registry.k8s.io/kube-proxy:v1.34.2
+[config/images] Pulled registry.k8s.io/coredns/coredns:v1.12.1
+[config/images] Pulled registry.k8s.io/pause:3.10.1
+[config/images] Pulled registry.k8s.io/etcd:3.6.5-0
 ```
 
+准备 kubeadm.yaml 文件备用。
+
 ### flannel
+
+备注：可以先通过在线安装的方式安装好k8s，然后通过 `docker image ls` 命令查看需要的镜像文件及其版本，就可以提前下载好k8s安装需要的镜像文件了。
 
 下载 flannel 需要的镜像文件：
 
 ```bash
-docker pull ghcr.io/flannel-io/flannel-cni-plugin:v1.6.2-flannel1
-docker pull ghcr.io/flannel-io/flannel:v0.26.7
+docker pull ghcr.io/flannel-io/flannel-cni-plugin:v1.8.0-flannel1
+docker pull ghcr.io/flannel-io/flannel:v0.27.4
 ```
 
 参考在线安装文档准备以下 yaml 文件：
@@ -64,18 +68,19 @@ helm repo update
 helm search repo kubernetes-dashboard -l
 ```
 
-发现 dashboard 的最新版本是 7.12.0，所以下载 dashboard 需要的 charts 文件：
+发现 dashboard 的最新版本是 7.14.0，所以下载 dashboard 需要的 charts 文件：
 
 ```bash
-helm pull kubernetes-dashboard/kubernetes-dashboard --version 7.12.0 --untar --untardir ~/work/soft/k8s/charts
+helm pull kubernetes-dashboard/kubernetes-dashboard --version 7.14.0 --untar --untardir ~/work/soft/k8s/charts
 ```
 
 下载 dashboard 需要的镜像文件：
 
 ```bash
-docker pull docker.io/kubernetesui/dashboard-api:1.12.0
-docker pull docker.io/kubernetesui/dashboard-auth:1.2.4
-docker pull docker.io/kubernetesui/dashboard-web:1.6.2
+docker pull kong:3.9
+docker pull docker.io/kubernetesui/dashboard-api:1.14.0
+docker pull docker.io/kubernetesui/dashboard-auth:1.4.0
+docker pull docker.io/kubernetesui/dashboard-web:1.7.0
 docker pull docker.io/kubernetesui/dashboard-metrics-scraper:1.2.2
 ```
 
@@ -90,8 +95,7 @@ docker pull docker.io/kubernetesui/dashboard-metrics-scraper:1.2.2
 下载 metrics-server 需要的镜像文件：
 
 ```bash
-docker pull registry.k8s.io/metrics-server/metrics-server:v0.7.2
-docker pull docker.io/kubernetesui/dashboard-metrics-scraper:1.2.2
+docker pull registry.k8s.io/metrics-server/metrics-server:v0.8.0
 ```
 
 参考在线安装文档准备以下 yaml 文件：
@@ -105,9 +109,11 @@ docker pull docker.io/kubernetesui/dashboard-metrics-scraper:1.2.2
 执行 `kubeadm init` 命令， 注意检查并修改 IP 地址为实际 IP 地址：
 
 ```bash
-NODE_IP=192.168.3.175
+cd ~/work/soft/k8s/
 
-sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --cri-socket unix:///var/run/cri-dockerd.sock --apiserver-advertise-address=$NODE_IP
+NODE_IP=192.168.3.168
+
+sudo kubeadm init --config=kubeadm.yaml
 ```
 
 配置 kube config：
@@ -121,7 +127,7 @@ sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --cri-socket unix:///var/run/
 配置 flannel 网络：
 
 ```bash
-kubectl apply -f ~/work/soft/k8s/menifests/kube-flannel.yml
+kubectl apply -f ~/work/soft/k8s/kube-flannel.yml
 ```
 
 去除污点：
@@ -170,7 +176,7 @@ echo "url is: https://$NODE_IP:$NODE_PORT"
 安装 metrics-server：
 
 ```bash
-kubectl apply -f ~/work/soft/k8s/menifests/metrics-server-components.yaml
+kubectl apply -f ~/work/soft/k8s/components.yaml
 
 kubectl wait --namespace kube-system \
   --for=condition=Ready \
@@ -189,11 +195,19 @@ kubectl top pods -n kube-system
 
 ### 脚本自动安装
 
+
+```bash
+cd ~/work/soft/k8s/
+vi install_k8s_prewarm.zsh
+```
+
+内容如下：
+
 ```bash
 #!/usr/bin/env zsh
 
-# Kubernetes 自动化安装脚本 (Debian 12 + Helm + Dashboard + Metrics Server)
-# 使用方法: sudo ./install_k8s_prewarm.zsh <NODE_IP>
+# Kubernetes 自动化安装脚本 (Debian 13 + Helm + Dashboard + Metrics Server)
+# 使用方法: sudo ./install_k8s_prewarm.zsh
 
 # 获取脚本所在绝对路径
 K8S_INSTALL_PATH=$(cd "$(dirname "$0")"; pwd)
@@ -203,19 +217,16 @@ echo "🔍 检测到安装文件目录: $K8S_INSTALL_PATH"
 
 # 检查是否以 root 执行
 if [[ $EUID -ne 0 ]]; then
-  echo "❌ 此脚本必须以 root 身份运行" 
+  echo "❌ 此脚本必须以 root 身份运行"
   exit 1
 fi
 
 # 获取节点 IP
-if [[ -z "$1" ]]; then
-  echo "ℹ️ 用法: $0 <节点IP>"
-  exit 1
-fi
-NODE_IP=$1
+NODE_IP=$(hostname -I | awk '{print $1}')
 
 # 安装日志
-LOG_FILE="$K8S_INSTALL_PATH/k8s_install_$(date +%Y%m%d_%H%M%S).log"
+mkdir -p "$K8S_INSTALL_PATH/logs"
+LOG_FILE="$K8S_INSTALL_PATH/logs/k8s_install_$(date +%Y%m%d_%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "📅 开始安装 Kubernetes 集群 - $(date)"
@@ -225,11 +236,8 @@ echo "📁 资源目录: $K8S_INSTALL_PATH"
 # 步骤1: kubeadm 初始化
 echo "🚀 正在初始化 Kubernetes 控制平面..."
 kubeadm_init() {
-  kubeadm init \
-    --pod-network-cidr 10.244.0.0/16 \
-    --cri-socket unix:///var/run/cri-dockerd.sock \
-    --apiserver-advertise-address=$NODE_IP
-  
+  sudo kubeadm init --config="$MANIFESTS_PATH/kubeadm.yaml"
+
   if [[ $? -ne 0 ]]; then
     echo "❌ kubeadm init 失败"
     exit 1
@@ -241,12 +249,12 @@ sleep 3
 # 步骤2: 配置 kubectl
 echo "⚙️ 为 root 用户配置 kubectl..."
 mkdir -p $HOME/.kube
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+cp /etc/kubernetes/admin.conf $HOME/.kube/config
 chown $(id -u):$(id -g) $HOME/.kube/config
 echo "⚙️ 为当前用户配置 kubectl..."
 CURRENT_USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
 mkdir -p $CURRENT_USER_HOME/.kube
-cp -i /etc/kubernetes/admin.conf $CURRENT_USER_HOME/.kube/config
+cp /etc/kubernetes/admin.conf $CURRENT_USER_HOME/.kube/config
 chown $(id -u $SUDO_USER):$(id -g $SUDO_USER) $CURRENT_USER_HOME/.kube/config
 
 # 步骤3: 安装 Flannel 网络插件
@@ -340,7 +348,7 @@ kubectl wait --namespace kube-system \
 echo "✅ 安装完成!"
 sleep 5
 echo ""
-echo "🛠️ 验证命令:"
+echo "🛠️  验证命令:"
 echo "kubectl top nodes"
 kubectl top nodes
 echo ""
@@ -352,4 +360,17 @@ echo "📌 重要信息:"
 echo "Dashboard URL: https://$NODE_IP:$NODE_PORT"
 echo "Token 文件: $K8S_INSTALL_PATH/dashboard-admin-user-token.txt"
 echo "安装日志: $LOG_FILE"
+
+```
+
+增加执行权限：
+
+```bash
+chmod +x install_k8s_prewarm.zsh
+```
+
+执行：
+
+```bash
+sudo ./install_k8s_prewarm.zsh
 ```
