@@ -13,7 +13,7 @@ description: >
 
 之后就可以重用该模板，在需要时创建虚拟机，在虚拟机中执行 `kubeadmin init` 即可快速安装 kubenetes。
 
-原则上，在执行 `kubeadmin init` 之前的各种准备工作都可以参考在线安装的方式。而在 `kubeadmin init` 之后的安装工作，就只能通过提前准备安装文件和提前下载镜像文件等方式来加速。
+原则上，在执行 `kubeadmin init` 之前的各种准备工作都可以参考在线安装的方式。而在 `kubeadmin init` 之后的安装工作，就只能通过提前准备安装文件和提前下载镜像文件等方式来加速。为最大化提升速度，所有的镜像文件都将通过 habor 进行代理。
 
 ## 准备工作
 
@@ -26,92 +26,118 @@ description: >
 ### k8s cluster
 
 ```bash
-kubeadm config images pull --cri-socket unix:///var/run/cri-dockerd.sock
+kubeadm config images pull --cri-socket unix:///var/run/cri-dockerd.sock --config=kubeadm.yaml
 ```
 
 这样就可以提前下载好 kubeadm init 时需要的镜像文件：
 
 ```bash
-[config/images] Pulled registry.k8s.io/kube-apiserver:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-scheduler:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-proxy:v1.34.2
-[config/images] Pulled registry.k8s.io/coredns/coredns:v1.12.1
-[config/images] Pulled registry.k8s.io/pause:3.10.1
-[config/images] Pulled registry.k8s.io/etcd:3.6.5-0
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/kube-apiserver:v1.35.4
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/kube-controller-manager:v1.35.4
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/kube-scheduler:v1.35.4
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/kube-proxy:v1.35.4
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/coredns/coredns:v1.13.1
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/pause:3.10.1
+[config/images] Pulled 192.168.3.193:5000/k8s-proxy/etcd:3.6.6-0
 ```
 
-准备 kubeadm.yaml 文件备用。
+准备 kubeadm.yaml 文件备用，内容同在线安装：
+
+```bash
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+nodeRegistration:
+  criSocket: unix:///var/run/cri-dockerd.sock
+
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: v1.35.4
+imageRepository: 192.168.3.193:5000/k8s-proxy
+networking:
+  podSubnet: 10.244.0.0/16
+dns:
+  imageRepository: 192.168.3.193:5000/k8s-proxy/coredns
+  imageTag: v1.13.1
+etcd:
+  local:
+    imageRepository: 192.168.3.193:5000/k8s-proxy
+    imageTag: 3.6.6-0
+```
 
 ### flannel
 
-备注：可以先通过在线安装的方式安装好k8s，然后通过 `docker image ls` 命令查看需要的镜像文件及其版本，就可以提前下载好k8s安装需要的镜像文件了。
+下载原始的 kube-flannel.yml 文件：
+
+```bash
+wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+```
+
+修改 kube-flannel.yml, 将原有的镜像文件地址从
+
+```yaml
+image: ghcr.io/flannel-io/flannel:v0.28.4
+image: ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1
+```
+
+修改为：
+
+```yaml
+image: 192.168.3.193:5000/ghcr.io/flannel-io/flannel:v0.28.4
+image: 192.168.3.193:5000/ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1
+```
 
 下载 flannel 需要的镜像文件：
 
 ```bash
-docker pull ghcr.io/flannel-io/flannel-cni-plugin:v1.8.0-flannel1
-docker pull ghcr.io/flannel-io/flannel:v0.27.4
+docker pull 192.168.3.193:5000/ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1
+docker pull 192.168.3.193:5000/ghcr.io/flannel-io/flannel:v0.28.4
 ```
-
-参考在线安装文档准备以下 yaml 文件：
-
-- `~/work/soft/k8s/menifests/kube-flannel.yml`
-
-### dashboard
-
-查看 dashboard 的最新版本：
-
-```bash
-helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
-helm repo update
-helm search repo kubernetes-dashboard -l
-```
-
-发现 dashboard 的最新版本是 7.14.0，所以下载 dashboard 需要的 charts 文件：
-
-```bash
-helm pull kubernetes-dashboard/kubernetes-dashboard --version 7.14.0 --untar --untardir ~/work/soft/k8s/charts
-```
-
-下载 dashboard 需要的镜像文件：
-
-```bash
-docker pull kong:3.9
-docker pull docker.io/kubernetesui/dashboard-api:1.14.0
-docker pull docker.io/kubernetesui/dashboard-auth:1.4.0
-docker pull docker.io/kubernetesui/dashboard-web:1.7.0
-docker pull docker.io/kubernetesui/dashboard-metrics-scraper:1.2.2
-```
-
-参考在线安装文档准备以下 yaml 文件：
-
-- `~/work/soft/k8s/menifests/dashboard-adminuser-binding.yaml`
-- `~/work/soft/k8s/menifests/dashboard-adminuser.yaml`
-- `~/work/soft/k8s/menifests/dashboard-adminuser-secret.yaml`
 
 ### metrics-server
+
+下载原始的 components.yaml 文件, 保存为 metrics-server-components.yaml：
+
+```bash
+wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml 
+mv components.yaml metrics-server-components.yaml
+```
+
+修改内容如下：
+
+```yaml
+    spec:
+      containers:
+      - args:
+        - --cert-dir=/tmp
+        - --secure-port=10250
+        - --kubelet-preferred-address-types=InternalIP   # 修改
+        - --kubelet-use-node-status-port
+        - --metric-resolution=15s
+        - --kubelet-insecure-tls # 添加
+        image: 192.168.3.193:5000/registry.k8s.io/metrics-server/metrics-server:v0.8.1 # 修改
+```
 
 下载 metrics-server 需要的镜像文件：
 
 ```bash
-docker pull registry.k8s.io/metrics-server/metrics-server:v0.8.0
+docker pull 192.168.3.193:5000/registry.k8s.io/metrics-server/metrics-server:v0.8.1
 ```
 
-参考在线安装文档准备以下 yaml 文件：
+如果制作过程中，下载了多余的镜像，可以用如下命令先清空，再重新拉取需要的镜像：
 
-- `~/work/soft/k8s/menifests/metrics-server-components.yaml`
+```bash
+docker rmi -f $(docker images -q)
+```
 
 ## 安装
 
 ### 手工安装
 
-执行 `kubeadm init` 命令， 注意检查并修改 IP 地址为实际 IP 地址：
+执行 `kubeadm init` 命令：
 
 ```bash
 cd ~/work/soft/k8s/
-
-NODE_IP=192.168.3.168
 
 sudo kubeadm init --config=kubeadm.yaml
 ```
@@ -136,47 +162,10 @@ kubectl apply -f ~/work/soft/k8s/kube-flannel.yml
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
-安装 dashboard ：
-
-```bash
-helm upgrade --install kubernetes-dashboard \
-  ~/work/soft/k8s/charts/kubernetes-dashboard \
-  --create-namespace \
-  --namespace kubernetes-dashboard
-```
-
-准备用于登录 dashboard 的 admin-user 用户：
-
-```bash
-kubectl apply -f ~/work/soft/k8s/menifests/dashboard-adminuser.yaml
-kubectl apply -f ~/work/soft/k8s/menifests/dashboard-adminuser-binding.yaml
-
-kubectl -n kubernetes-dashboard create token admin-user
-kubectl apply -f ~/work/soft/k8s/menifests/dashboard-adminuser-secret.yaml
-
-ADMIN_USER_TOKEN=$(kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d)
-echo $ADMIN_USER_TOKEN > ~/work/soft/k8s/dashboard-admin-user-token.txt
-echo "admin-user token is: $ADMIN_USER_TOKEN"
-```
-
-将 kubernetes-dashboard-kong-proxy 设置为 NodePort 类型：
-
-```bash
-kubectl -n kubernetes-dashboard patch service kubernetes-dashboard-kong-proxy -p '{"spec":{"type":"NodePort"}}'
-```
-
-获取 NodePort：
-
-```bash
-NODE_PORT=$(kubectl -n kubernetes-dashboard get service kubernetes-dashboard-kong-proxy \
-  -o jsonpath='{.spec.ports[0].nodePort}')
-echo "url is: https://$NODE_IP:$NODE_PORT"
-```
-
 安装 metrics-server：
 
 ```bash
-kubectl apply -f ~/work/soft/k8s/components.yaml
+kubectl apply -f ~/work/soft/k8s/metrics-server-components.yaml
 
 kubectl wait --namespace kube-system \
   --for=condition=Ready \
@@ -206,13 +195,12 @@ vi install_k8s_prewarm.zsh
 ```bash
 #!/usr/bin/env zsh
 
-# Kubernetes 自动化安装脚本 (Debian 13 + Helm + Dashboard + Metrics Server)
+# Kubernetes 自动化安装脚本 (Debian 13 + Helm + Metrics Server)
 # 使用方法: sudo ./install_k8s_prewarm.zsh
 
 # 获取脚本所在绝对路径
 K8S_INSTALL_PATH=$(cd "$(dirname "$0")"; pwd)
 MANIFESTS_PATH="$K8S_INSTALL_PATH/menifests"
-CHARTS_PATH="$K8S_INSTALL_PATH/charts"
 echo "🔍 检测到安装文件目录: $K8S_INSTALL_PATH"
 
 # 检查是否以 root 执行
@@ -221,16 +209,12 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# 获取节点 IP
-NODE_IP=$(hostname -I | awk '{print $1}')
-
 # 安装日志
 mkdir -p "$K8S_INSTALL_PATH/logs"
 LOG_FILE="$K8S_INSTALL_PATH/logs/k8s_install_$(date +%Y%m%d_%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "📅 开始安装 Kubernetes 集群 - $(date)"
-echo "🔧 节点IP: $NODE_IP"
 echo "📁 资源目录: $K8S_INSTALL_PATH"
 
 # 步骤1: kubeadm 初始化
@@ -271,63 +255,7 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane- || {
   echo "⚠️ 去除污点失败 (可能不影响功能)"
 }
 
-# 步骤5: 从本地安装 Dashboard
-echo "📊 正在从本地安装 Kubernetes Dashboard..."
-helm upgrade --install kubernetes-dashboard \
-  "$CHARTS_PATH/kubernetes-dashboard" \
-  --create-namespace \
-  --namespace kubernetes-dashboard || {
-  echo "❌ Dashboard 安装失败"
-  exit 1
-}
-sleep 3
-
-# 步骤6: 配置 Dashboard 管理员用户
-echo "👤 创建 Dashboard 管理员用户..."
-kubectl apply -f "$MANIFESTS_PATH/dashboard-adminuser.yaml" || {
-  echo "❌ 创建 admin-user 失败"
-  exit 1
-}
-
-kubectl apply -f "$MANIFESTS_PATH/dashboard-adminuser-binding.yaml" || {
-  echo "❌ 创建 RBAC 绑定失败"
-  exit 1
-}
-
-kubectl apply -f "$MANIFESTS_PATH/dashboard-adminuser-secret.yaml" || {
-  echo "⚠️ 创建 Secret 失败 (可能已存在)"
-}
-
-# 获取并保存 Token
-echo "🔑 获取管理员 Token..."
-ADMIN_TOKEN=$(kubectl -n kubernetes-dashboard create token admin-user 2>/dev/null || \
-  kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath="{.data.token}" | base64 -d)
-
-if [[ -z "$ADMIN_TOKEN" ]]; then
-  echo "❌ 获取 Token 失败"
-  exit 1
-fi
-
-echo "$ADMIN_TOKEN" > "$K8S_INSTALL_PATH/dashboard-admin-user-token.txt"
-echo "✅ Token 已保存到: $K8S_INSTALL_PATH/dashboard-admin-user-token.txt"
-
-# 步骤7: 修改 Dashboard Service 类型
-echo "🔧 修改 Dashboard 服务类型为 NodePort..."
-kubectl -n kubernetes-dashboard patch service kubernetes-dashboard-kong-proxy \
-  -p '{"spec":{"type":"NodePort"}}' || {
-  echo "❌ 修改服务类型失败"
-  exit 1
-}
-sleep 3
-
-# 获取 NodePort
-NODE_PORT=$(kubectl -n kubernetes-dashboard get service kubernetes-dashboard-kong-proxy \
-  -o jsonpath='{.spec.ports[0].nodePort}')
-
-echo "🌍 Dashboard 访问地址: https://$NODE_IP:$NODE_PORT"
-echo "🔑 登录 Token: $ADMIN_TOKEN"
-
-# 步骤8: 安装 Metrics Server
+# 步骤5: 安装 Metrics Server
 echo "📈 正在安装 Metrics Server..."
 kubectl apply -f "$MANIFESTS_PATH/metrics-server-components.yaml" || {
   echo "❌ Metrics Server 安装失败"
@@ -336,10 +264,9 @@ kubectl apply -f "$MANIFESTS_PATH/metrics-server-components.yaml" || {
 
 # 等待 Metrics Server 就绪
 echo "⏳ 等待 Metrics Server 就绪 (最多5分钟)..."
-kubectl wait --namespace kube-system \
-  --for=condition=Ready \
-  --selector=k8s-app=metrics-server \
-  --timeout=300s pod || {
+kubectl rollout status deployment metrics-server \
+  --namespace kube-system \
+  --timeout=300s || {
   echo "❌ Metrics Server 启动超时"
   exit 1
 }
@@ -356,9 +283,6 @@ echo "kubectl top pods -n kube-system"
 kubectl top pods -n kube-system
 
 echo ""
-echo "📌 重要信息:"
-echo "Dashboard URL: https://$NODE_IP:$NODE_PORT"
-echo "Token 文件: $K8S_INSTALL_PATH/dashboard-admin-user-token.txt"
 echo "安装日志: $LOG_FILE"
 
 ```

@@ -7,6 +7,10 @@ description: >
   安装 kubernetes 的 dashboard
 ---
 
+This project is now archived and no longer maintained due to lack of active maintainers and contributors.
+
+--------
+
 ## 安装 dashboard
 
 参考：

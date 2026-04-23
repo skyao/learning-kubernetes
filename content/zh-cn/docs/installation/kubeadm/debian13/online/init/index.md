@@ -35,16 +35,16 @@ To see the stack trace of this error execute with --v=5 or higher
 ```bash
 $ kubeadm config images pull
 
-[config/images] Pulled registry.k8s.io/kube-apiserver:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-scheduler:v1.34.2
-[config/images] Pulled registry.k8s.io/kube-proxy:v1.34.2
-[config/images] Pulled registry.k8s.io/coredns/coredns:v1.12.1
+[config/images] Pulled registry.k8s.io/kube-apiserver:v1.35.4
+[config/images] Pulled registry.k8s.io/kube-controller-manager:v1.35.4
+[config/images] Pulled registry.k8s.io/kube-scheduler:v1.35.4
+[config/images] Pulled registry.k8s.io/kube-proxy:v1.35.4
+[config/images] Pulled registry.k8s.io/coredns/coredns:v1.13.1
 [config/images] Pulled registry.k8s.io/pause:3.10.1
-[config/images] Pulled registry.k8s.io/etcd:3.6.5-0
+[config/images] Pulled registry.k8s.io/etcd:3.6.6-0
 ```
 
-Kubernetes 大多数核心组件镜像（kube-apiserver、kube-scheduler、etcd、pause 等）都是单层路径，而 CoreDNS 特别用了两层路径 coredns/coredns。这会导致在使用代码仓库时出错:
+Kubernetes 大多数核心组件镜像（kube-apiserver、kube-scheduler、etcd、pause 等）都是单层路径，而 CoreDNS 特别用了两层路径 coredns/coredns。这会导致在使用代理仓库时出错:
 
 ```bash
 $ kubeadm config images pull --image-repository=192.168.3.193:5000/k8s-proxy
@@ -84,25 +84,25 @@ vi kubeadm.yaml
 内容为:
 
 ```bash
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 nodeRegistration:
   criSocket: unix:///var/run/cri-dockerd.sock
 
 ---
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
-kubernetesVersion: v1.34.2
+kubernetesVersion: v1.35.4
 imageRepository: 192.168.3.193:5000/k8s-proxy
 networking:
   podSubnet: 10.244.0.0/16
 dns:
   imageRepository: 192.168.3.193:5000/k8s-proxy/coredns
-  imageTag: v1.12.1
+  imageTag: v1.13.1
 etcd:
   local:
     imageRepository: 192.168.3.193:5000/k8s-proxy
-    imageTag: 3.6.5-0
+    imageTag: 3.6.6-0
 ```
 
 ### 执行 init
@@ -116,9 +116,7 @@ sudo kubeadm init --config=kubeadm.yaml
 输出为：
 
 ```bash
-W1127 11:54:29.969274    1961 common.go:100] your configuration file uses a deprecated API spec: "kubeadm.k8s.io/v1beta3" (kind: "ClusterConfiguration"). Please use 'kubeadm config migrate --old-config old-config-file --new-config new-config-file', which will write the new, similar spec using a newer API version.
-W1127 11:54:29.969428    1961 common.go:100] your configuration file uses a deprecated API spec: "kubeadm.k8s.io/v1beta3" (kind: "InitConfiguration"). Please use 'kubeadm config migrate --old-config old-config-file --new-config new-config-file', which will write the new, similar spec using a newer API version.
-[init] Using Kubernetes version: v1.34.2
+[init] Using Kubernetes version: v1.35.4
 [preflight] Running pre-flight checks
 [preflight] Pulling images required for setting up a Kubernetes cluster
 [preflight] This might take a minute or two, depending on the speed of your internet connection
@@ -126,15 +124,15 @@ W1127 11:54:29.969428    1961 common.go:100] your configuration file uses a depr
 [certs] Using certificateDir folder "/etc/kubernetes/pki"
 [certs] Generating "ca" certificate and key
 [certs] Generating "apiserver" certificate and key
-[certs] apiserver serving cert is signed for DNS names [debian13 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.3.100]
+[certs] apiserver serving cert is signed for DNS names [debian13 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.3.232]
 [certs] Generating "apiserver-kubelet-client" certificate and key
 [certs] Generating "front-proxy-ca" certificate and key
 [certs] Generating "front-proxy-client" certificate and key
 [certs] Generating "etcd/ca" certificate and key
 [certs] Generating "etcd/server" certificate and key
-[certs] etcd/server serving cert is signed for DNS names [debian13 localhost] and IPs [192.168.3.100 127.0.0.1 ::1]
+[certs] etcd/server serving cert is signed for DNS names [debian13 localhost] and IPs [192.168.3.232 127.0.0.1 ::1]
 [certs] Generating "etcd/peer" certificate and key
-[certs] etcd/peer serving cert is signed for DNS names [debian13 localhost] and IPs [192.168.3.100 127.0.0.1 ::1]
+[certs] etcd/peer serving cert is signed for DNS names [debian13 localhost] and IPs [192.168.3.232 127.0.0.1 ::1]
 [certs] Generating "etcd/healthcheck-client" certificate and key
 [certs] Generating "apiserver-etcd-client" certificate and key
 [certs] Generating "sa" key and public key
@@ -156,20 +154,20 @@ W1127 11:54:29.969428    1961 common.go:100] your configuration file uses a depr
 [kubelet-start] Starting the kubelet
 [wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests"
 [kubelet-check] Waiting for a healthy kubelet at http://127.0.0.1:10248/healthz. This can take up to 4m0s
-[kubelet-check] The kubelet is healthy after 501.044301ms
+[kubelet-check] The kubelet is healthy after 500.416007ms
 [control-plane-check] Waiting for healthy control plane components. This can take up to 4m0s
-[control-plane-check] Checking kube-apiserver at https://192.168.3.100:6443/livez
+[control-plane-check] Checking kube-apiserver at https://192.168.3.232:6443/livez
 [control-plane-check] Checking kube-controller-manager at https://127.0.0.1:10257/healthz
 [control-plane-check] Checking kube-scheduler at https://127.0.0.1:10259/livez
-[control-plane-check] kube-controller-manager is healthy after 1.030105473s
-[control-plane-check] kube-scheduler is healthy after 1.587157411s
-[control-plane-check] kube-apiserver is healthy after 3.000562739s
+[control-plane-check] kube-controller-manager is healthy after 1.001317452s
+[control-plane-check] kube-scheduler is healthy after 1.502089525s
+[control-plane-check] kube-apiserver is healthy after 3.000477876s
 [upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
 [kubelet] Creating a ConfigMap "kubelet-config" in namespace kube-system with the configuration for the kubelets in the cluster
 [upload-certs] Skipping phase. Please see --upload-certs
 [mark-control-plane] Marking the node debian13 as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
 [mark-control-plane] Marking the node debian13 as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
-[bootstrap-token] Using token: npub0l.tdxgmyjagob3npq9
+[bootstrap-token] Using token: ki33kg.5vpalsrlaa9bjvn2
 [bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
 [bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
 [bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
@@ -198,8 +196,8 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.3.100:6443 --token npub0l.tdxgmyjagob3npq9 \
-	--discovery-token-ca-cert-hash sha256:366824f19b48b07d5e69fd2e928343b28b949cf161a5ff9ec10bf960ff4636c9
+kubeadm join 192.168.3.232:6443 --token ki33kg.5vpalsrlaa9bjvn2 \
+	--discovery-token-ca-cert-hash sha256:dba4e956a1e678da2319e29ce1b880bc4b21771cd5635dfa3117b7c2f409af29 
 ```
 
 根据提示操作：
@@ -225,8 +223,8 @@ kubectl get node
 能看到此时节点的状态会是 NotReady：
 
 ```bash
-NAME       STATUS     ROLES           AGE     VERSION
-debian13   NotReady   control-plane   3m49s   v1.32.2
+NAME       STATUS     ROLES           AGE   VERSION
+debian13   NotReady   control-plane   53s   v1.35.4
 ```
 
 执行：
@@ -242,10 +240,10 @@ kubectl describe node debian13
 Conditions:
   Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
   ----             ------  -----------------                 ------------------                ------                       -------
-  MemoryPressure   False   Tue, 04 Mar 2025 20:28:00 +0800   Tue, 04 Mar 2025 20:23:53 +0800   KubeletHasSufficientMemory   kubelet has sufficient memory available
-  DiskPressure     False   Tue, 04 Mar 2025 20:28:00 +0800   Tue, 04 Mar 2025 20:23:53 +0800   KubeletHasNoDiskPressure     kubelet has no disk pressure
-  PIDPressure      False   Tue, 04 Mar 2025 20:28:00 +0800   Tue, 04 Mar 2025 20:23:53 +0800   KubeletHasSufficientPID      kubelet has sufficient PID available
-  Ready            False   Tue, 04 Mar 2025 20:28:00 +0800   Tue, 04 Mar 2025 20:23:53 +0800   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+  MemoryPressure   False   Wed, 22 Apr 2026 15:24:55 +0800   Wed, 22 Apr 2026 15:24:53 +0800   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Wed, 22 Apr 2026 15:24:55 +0800   Wed, 22 Apr 2026 15:24:53 +0800   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Wed, 22 Apr 2026 15:24:55 +0800   Wed, 22 Apr 2026 15:24:53 +0800   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            False   Wed, 22 Apr 2026 15:24:55 +0800   Wed, 22 Apr 2026 15:24:53 +0800   KubeletNotReady              container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
 ```
 
 需要继续安装网络插件。
@@ -265,15 +263,15 @@ kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/
 ```bash
 $ k get pods -A
 
-NAMESPACE      NAME                               READY   STATUS    RESTARTS   AGE
-kube-flannel   kube-flannel-ds-8p8b8              1/1     Running   0          39s
-kube-system    coredns-848fbff4f8-phhgv           1/1     Running   0          2m27s
-kube-system    coredns-848fbff4f8-wlc2s           1/1     Running   0          2m27s
-kube-system    etcd-debian13                      1/1     Running   0          2m36s
-kube-system    kube-apiserver-debian13            1/1     Running   0          2m36s
-kube-system    kube-controller-manager-debian13   1/1     Running   0          2m36s
-kube-system    kube-proxy-vknr2                   1/1     Running   0          2m28s
-kube-system    kube-scheduler-debian13            1/1     Running   0          2m37s
+NAMESPACE      NAME                               READY   STATUS    RESTARTS       AGE
+kube-flannel   kube-flannel-ds-mdzgj              1/1     Running   0              39s
+kube-system    coredns-7f58b9688b-9rdzj           1/1     Running   0              2m44s
+kube-system    coredns-7f58b9688b-lv4jr           1/1     Running   0              2m44s
+kube-system    etcd-debian13                      1/1     Running   0              2m51s
+kube-system    kube-apiserver-debian13            1/1     Running   1 (5m8s ago)   2m52s
+kube-system    kube-controller-manager-debian13   1/1     Running   0              2m51s
+kube-system    kube-proxy-qzhkw                   1/1     Running   0              2m44s
+kube-system    kube-scheduler-debian13            1/1     Running   0              2m51s
 ```
 
 如果发现 kube-flannel-ds pod 的状态总是 CrashLoopBackOff：
@@ -319,14 +317,3 @@ NAMESPACE      NAME                               READY   STATUS    RESTARTS    
 kube-flannel   kube-flannel-ds-ts6n8              1/1     Running   7 (9m27s ago)   15m
 ```
 
-### 安装 Calico
-
-https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico
-
-查看最新版本，当前最新版本是 v3.29.2:
-
-```bash
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/tigera-operator.yaml
-```
-
-TODO：用了 flannel， Calico 后面再验证。 

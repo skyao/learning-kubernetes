@@ -76,59 +76,32 @@ TODO：后面考虑换 containerd
 
 https://helm.sh/docs/intro/install/#from-apt-debianubuntu
 
-安装：
-
-```bash
-curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
-sudo apt-get install apt-transport-https --yes
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-sudo apt-get update
-sudo apt-get install helm
-```
-
-安装后取消 helm 的自动更新：
-
-```bash
-sudo vi /etc/apt/sources.list.d/helm-stable-debian.list
-```
-
-查看安装的版本：
-
-```bash
-$ helm version
-version.BuildInfo{Version:"v3.19.2", GitCommit:"8766e718a0119851f10ddbe4577593a45fadf544", GitTreeState:"clean", GoVersion:"go1.24.9"}
-```
-
-有时会遇到网络问题无法访问:
-
-```bash
-sudo apt-get update
-Hit:1 http://mirrors.ustc.edu.cn/debian trixie InRelease
-Hit:2 http://mirrors.ustc.edu.cn/debian trixie-updates InRelease               
-Ign:3 https://baltocdn.com/helm/stable/debian all InRelease                    
-Hit:4 http://security.debian.org/debian-security trixie-security InRelease
-Ign:3 https://baltocdn.com/helm/stable/debian all InRelease
-Ign:3 https://baltocdn.com/helm/stable/debian all InRelease
-Err:3 https://baltocdn.com/helm/stable/debian all InRelease
-  SSL connection failed: error:0A000126:SSL routines::unexpected eof while reading / Success [IP: 198.18.1.113 443]
-Reading package lists... Done
-W: Failed to fetch https://baltocdn.com/helm/stable/debian/dists/all/InRelease  SSL connection failed: error:0A000126:SSL routines::unexpected eof while reading / Success [IP: 198.18.1.113 443]
-W: Some index files failed to download. They have been ignored, or old ones used instead.
-```
-
-可以选择用官方脚本安装 Helm（以便绕过上面那个无法访问的 apt 仓库）:
+选择用官方脚本安装 Helm（以便绕过无法访问的 apt 仓库）:
 
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ```
 
-或者国内镜像源,比如清华大学镜像站提供的 Helm 源:
-
+输出为：
 
 ```bash
-echo "deb https://mirrors.tuna.tsinghua.edu.cn/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm.list
-curl https://mirrors.tuna.tsinghua.edu.cn/helm/stable/debian/helm.gpg | sudo apt-key add -
-sudo apt-get update
-sudo apt-get install helm
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11929  100 11929    0     0  48738      0 --:--:-- --:--:-- --:--:-- 48889
+Downloading https://get.helm.sh/helm-v3.20.2-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+helm installed into /usr/local/bin/helm
 ```
 
+验证版本：
+
+```bash
+helm version
+```
+
+版本显示为 v3.20.2：
+
+```bash
+version.BuildInfo{Version:"v3.20.2", GitCommit:"8fb76d6ab555577e98e23b7500009537a471feee", GitTreeState:"clean", GoVersion:"go1.25.9"}
+```
